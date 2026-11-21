@@ -5,6 +5,7 @@
 :root {
   --bg: #0B1426; --card: #121E33; --card2: #1A2842; --line: #2A3A57;
   --teal: #2DD4BF; --teal-soft: #0F3A47; --teal-deep: #0F766E; --amber: #F5B83D; --amber-soft: #2A2312; --coral: #FF7A6B;
+  --blue: #5AA9FF; --blue-soft: #10294A; --blue-deep: #1D4F8C;
   --text: #F1F5F5; --muted: #9DAAC4; --muted2: #C9D3E3;
   --head: 'Barlow Condensed', 'Arial Narrow', sans-serif; --body: Inter, system-ui, -apple-system, sans-serif;
   --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -204,3 +205,15 @@ textarea.input { height: auto; padding: 10px 14px; line-height: 1.4; resize: non
 @keyframes draw { from { stroke-dashoffset: 1200; } to { stroke-dashoffset: 0; } }
 .draw { stroke-dasharray: 1200; animation: draw 1.1s ease-out both; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* ---------- Schwimmen (Blau) ---------- */
+.txt-blue { color: var(--blue); }
+.card.blue { background: var(--blue-soft); border-color: var(--blue); }
+.plan-card.blue { background: var(--blue-soft); border-color: var(--blue); }
+.plan-card.blue .ico-box { background: var(--blue); color: var(--bg); }
+.play.blue { border-color: var(--blue); color: var(--blue); }
+.ico-box.blue { background: var(--blue); color: var(--bg); }
+.btn.blue { background: var(--blue); color: var(--bg); }
+.btn.dashed.blue { background: transparent; border: 1px dashed var(--blue); color: var(--blue); }
+.chip.b.on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+input[type="date"] { color-scheme: dark; color: var(--text); min-width: 0; }

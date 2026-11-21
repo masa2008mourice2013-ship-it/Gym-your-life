@@ -8,7 +8,7 @@
     plans: 'gyl-plaene-v1', active: 'gyl-aktiv-v1', days: 'gyl-tage-v1', last: 'gyl-letzte-werte-v1',
     hist: 'gyl-verlauf-v1', own: 'gyl-eigene-uebungen-v1', notes: 'gyl-notizen-v1', settings: 'gyl-einstellungen-v1',
     run: 'gyl-laufendes-training-v1', habits: 'gyl-gewohnheiten-v1', hlog: 'gyl-gewohnheiten-log-v1',
-    routines: 'gyl-routinen-v1', food: 'gyl-essen-ideen-v1'
+    routines: 'gyl-routinen-v1', food: 'gyl-essen-ideen-v1', swim: 'gyl-schwimmen-v1'
   };
   G.load = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch (e) { return fb; } };
   G.save = (k, v) => {
@@ -68,6 +68,7 @@
   // ---------- Icons ----------
   const svg = (d, o) => `<svg width="${(o && o.s) || 22}" height="${(o && o.s) || 22}" viewBox="0 0 24 24" fill="${(o && o.fill) || 'none'}" stroke="${(o && o.fill) ? 'none' : 'currentColor'}" stroke-width="${(o && o.w) || 2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   G.I = {
+    swim: (s) => svg('<circle cx="17" cy="6" r="2"/><path d="M4 12l5-3.5 4 2 3-2M2 17c2 0 2-1.5 4-1.5S8 17 10 17s2-1.5 4-1.5S16 17 18 17s2-1.5 4-1.5M2 21c2 0 2-1.5 4-1.5S8 21 10 21s2-1.5 4-1.5S16 21 18 21s2-1.5 4-1.5"/>', { s }),
     dumbbell: (s) => svg('<path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/>', { s }),
     list: (s) => svg('<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>', { s }),
     routine: (s) => svg('<path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4"/>', { s }),

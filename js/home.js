@@ -110,6 +110,7 @@
           <span class="small" style="font-size:14px">${nextP.exercises.length} Übungen · ${lastOfNext ? 'zuletzt ' + G.agoText(lastOfNext.date) : 'noch nicht trainiert'}</span></div>
         <a href="#/training" class="btn" data-a="setActive" data-id="${nextP.id}">${I.play(20)}Training starten</a>
       </div>
+      ${G.swimSaturdayBox()}
       <div class="stats">
         <div class="stat"><span class="num">${thisWeek}</span><span>Trainings diese Woche</span></div>
         <div class="stat"><span class="num amber">${recWeek}</span><span>${recWeek === 1 ? 'neuer Rekord' : 'neue Rekorde'}</span></div>
@@ -123,6 +124,7 @@
       <div class="list">
         <div class="row-between" style="padding:0 4px"><h2 class="h2">Deine Pläne</h2><button type="button" class="pill" data-a="newPlan">+ Neuer Plan</button></div>
         ${planCards}
+        ${G.swimPlanBox()}
       </div>
     </div>${G.nav('home')}${daySheet}`;
   };

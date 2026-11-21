@@ -1,6 +1,6 @@
 // Gym your Life – Offline-Speicher (Service Worker)
-const CACHE = 'gyl-v1';
-const FILES = ['./', './index.html', './styles.css', './data.js', './js/core.js', './js/home.js', './js/plan.js', './js/training.js', './js/stats.js', './js/routinen.js', './js/essen.js', './js/settings.js', './js/main.js', './manifest.webmanifest',
+const CACHE = 'gyl-v2';
+const FILES = ['./', './index.html', './styles.css', './data.js', './js/core.js', './js/home.js', './js/plan.js', './js/training.js', './js/stats.js', './js/routinen.js', './js/essen.js', './js/swim.js', './js/settings.js', './js/main.js', './manifest.webmanifest',
   './icons/logo.png', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png'];
 
 self.addEventListener('install', (e) => {
