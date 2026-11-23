@@ -66,7 +66,11 @@
       if (p.mode !== 'time') { done.forEach((r) => { vol += r.kg * r.reps; }); const b = bestLast(p); if (b !== null && done.some((r) => r.kg > b)) recs++; }
     });
     if (sets) { const h = G.history().concat([{ date: new Date().toISOString(), plan: t.planName, ex, modes }]).slice(-500); G.save(G.K.hist, h); }
-    t.summary = { sets, vol, recs }; t.finished = true; t.timerEnd = 0; t.holdEnd = 0;
+    // Erfolgsspruch: jedes Mal ein anderer (nie derselbe wie beim letzten Mal)
+    const qs = G.D.DONE_QUOTES, lastQ = G.load('gyl-letzter-erfolgsspruch', -1);
+    let qi = Math.floor(Math.random() * qs.length); if (qs.length > 1 && qi === lastQ) qi = (qi + 1 + Math.floor(Math.random() * (qs.length - 1))) % qs.length;
+    G.save('gyl-letzter-erfolgsspruch', qi);
+    t.summary = { sets, vol, recs, quote: qs[qi] }; t.finished = true; t.timerEnd = 0; t.holdEnd = 0;
     G.remove(G.K.run); G.keepAwake(false); G.render();
   };
 
@@ -84,6 +88,8 @@
           <div style="width:96px;height:96px;border-radius:999px;background:var(--teal);color:var(--bg);display:flex;align-items:center;justify-content:center">${I.check(52)}</div>
           <h1 class="h1" style="font-size:44px;line-height:1">Training geschafft!</h1>
           <span class="small" style="font-size:15px">Stark, ${esc(G.settings().name.trim() || 'Josi')}. Alles ist gespeichert.</span>
+          <div class="card soft pop" style="width:100%;align-items:center;gap:8px;padding:16px;margin-top:4px"><span class="teal">${I.quote(28)}</span>
+            <p class="num" style="margin:0;font-size:26px;line-height:1.15;text-transform:uppercase;text-align:center">${esc(s.quote || '')}</p></div>
           <div class="stats" style="width:100%;padding-top:12px">
             <div class="stat" style="align-items:center"><span class="num" style="font-size:32px">${s.sets}</span><span>Sätze</span></div>
             <div class="stat" style="align-items:center"><span class="num teal" style="font-size:32px">${G.fmtVol(s.vol)}</span><span>kg bewegt</span></div>

@@ -62,7 +62,7 @@
     return `<div class="plan-card blue">
       <span class="ico-box">${I.swim(22)}</span>
       <a href="#/schwimmen" class="link-area" aria-label="Schwimmen öffnen"><span class="h3 ellipsis">Schwimmen</span><span class="small">${sub}</span></a>
-      <a href="#/schwimmen" class="play blue" data-a="swNew" aria-label="Neue Schwimm-Einheit eintragen">${I.plus(18)}</a>
+      <a href="#/schwimmen" class="play blue" aria-label="Schwimmen öffnen">${I.arrowRight(18)}</a>
     </div>`;
   };
 
