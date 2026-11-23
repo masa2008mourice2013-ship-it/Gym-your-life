@@ -229,3 +229,12 @@ textarea.input { height: auto; padding: 10px 14px; line-height: 1.4; resize: non
 button.day { font: inherit; padding: 0; width: 100%; cursor: pointer; }
 .day .tag.plan { overflow: hidden; text-overflow: ellipsis; letter-spacing: 0; }
 .day.train .tag.plan { font-weight: 700; }
+
+/* ---------- Wischbarer Wochenstreifen, heute in Gelb ---------- */
+.weekstrip { display: flex; gap: 3px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; overscroll-behavior-x: contain; }
+.weekstrip::-webkit-scrollbar { display: none; }
+.weekstrip .day { flex: 0 0 calc((100% - 18px) / 7); width: auto; min-width: 0; }
+.weekstrip .day.snap { scroll-snap-align: start; }
+.day.today { background: var(--amber); border: 2px solid var(--amber); color: var(--bg); }
+.day.today .wd, .day.today .dn, .day.today .tag { color: var(--bg); }
+.day.today .tag { font-weight: 700; }

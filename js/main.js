@@ -1,7 +1,7 @@
 // Gym your Life – Start der App: Seitenwechsel, Klicks, Eingaben, Uhr
 (function () {
   const G = window.G, app = document.getElementById('app');
-  const ROUTES = ['start', 'home', 'plan', 'training', 'verlauf', 'fortschritt', 'routinen', 'essen', 'schwimmen', 'notiz', 'einstellungen'];
+  const ROUTES = ['start', 'home', 'plan', 'plaene', 'training', 'verlauf', 'fortschritt', 'routinen', 'essen', 'schwimmen', 'notiz', 'einstellungen'];
 
   const parse = () => {
     const parts = (location.hash || '').replace(/^#\/?/, '').split('/').filter(Boolean);
@@ -13,6 +13,7 @@
     const { route, params } = parse();
     G.route = route;
     app.innerHTML = G.screens[route](params) || '';
+    if (G.afterRender) G.afterRender();
     const af = app.querySelector('[autofocus]');
     if (af) { af.focus(); try { const n = af.value.length; af.setSelectionRange(n, n); } catch (e) {} }
   };

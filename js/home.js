@@ -55,12 +55,12 @@
     // Woche
     let next = null;
     const week = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 28; i++) {
       const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
       const dp = wpPlan(d.getDay()), train = days.indexOf(d.getDay()) !== -1 || !!dp;
       if (train && !next) next = { i, d };
       const tag = dp ? dp.name : i === 0 ? 'Heute' : train ? 'Training' : '';
-      week.push(`<button type="button" class="day${train ? ' train' : ''}${i === 0 ? ' today' : ''}" data-a="dayOpen" data-wd="${d.getDay()}" data-i="${i}" aria-label="${G.WDL[d.getDay()]}, ${d.getDate()}.${d.getMonth() + 1}.${i === 0 ? ' (heute)' : ''}${dp ? ', Plan: ' + esc(dp.name) : ''} – Plan wählen"><span class="wd">${G.WD[d.getDay()]}</span><span class="dn">${d.getDate()}</span><span class="tag${dp ? ' plan' : ''}">${esc(tag)}</span></button>`);
+      week.push(`<button type="button" class="day${train ? ' train' : ''}${i === 0 ? ' today' : ''}${i % 7 === 0 ? ' snap' : ''}" data-a="dayOpen" data-wd="${d.getDay()}" data-i="${i}" aria-label="${G.WDL[d.getDay()]}, ${d.getDate()}.${d.getMonth() + 1}.${i === 0 ? ' (heute)' : ''}${dp ? ', Plan: ' + esc(dp.name) : ''} – Plan wählen"><span class="wd">${G.WD[d.getDay()]}</span><span class="dn">${d.getDate()}</span><span class="tag${dp ? ' plan' : ''}">${esc(tag)}</span></button>`);
     }
     const nextLabel = !next ? 'kein Trainingstag gewählt' : next.i === 0 ? 'heute' : next.i === 1 ? 'morgen' : G.WDL[next.d.getDay()] + ', ' + next.d.getDate() + '.' + (next.d.getMonth() + 1) + '.';
     // nächster Plan
@@ -80,18 +80,6 @@
       const has = hist.some((h) => { const d = new Date(h.date); return d >= a && d < b; });
       if (has) streak++; else if (w === 0) continue; else break;
     }
-    const planCards = plans.map((p) => u.editingId === p.id ? `
-      <div class="card active sm" style="gap:10px">
-        <label class="label" for="pname">Plan umbenennen</label>
-        <input id="pname" class="input big" value="${esc(u.draft)}" maxlength="28" data-in="homeDraft" data-enter="homeSave" autofocus>
-        <div class="btns"><button type="button" class="btn ghost md" data-a="homeCancel">Abbrechen</button><button type="button" class="btn md" data-a="homeSave">Speichern</button></div>
-      </div>` : `
-      <div class="plan-card">
-        <span class="ico-box">${I.dumbbell(22)}</span>
-        <a href="#/plan/${p.id}" class="link-area" aria-label="${esc(p.name)} bearbeiten"><span class="h3 ellipsis">${esc(p.name)}</span><span class="small">${p.exercises.length} Übungen · bearbeiten</span></a>
-        <button type="button" class="icon-btn plain" data-a="homeRename" data-id="${p.id}" aria-label="${esc(p.name)} umbenennen" style="color:var(--muted)">${I.pencil(20)}</button>
-        <a href="#/training" class="play" data-a="setActive" data-id="${p.id}" aria-label="${esc(p.name)} starten">${I.play(18)}</a>
-      </div>`).join('');
     const daySheet = u.showDays ? `<div class="overlay" data-a="homeDaysClose" data-self="1"><div class="sheet" role="dialog" aria-label="Trainingstage einstellen">
       <div class="grip"></div>
       <div><h2 class="h2" style="font-size:28px">Trainingstage</h2><span class="small">An welchen Tagen trainierst du? Diese Tage werden auf der Startseite türkis markiert.</span></div>
@@ -124,7 +112,8 @@
       <div style="display:flex;flex-direction:column;gap:10px">
         <div class="row-between" style="padding:0 4px"><h2 class="h2" style="font-size:22px">Deine Trainingstage</h2>
           <button type="button" class="pill white" data-a="homeDaysOpen"><span class="teal">${I.sliders(18)}</span>Tage einstellen</button></div>
-        <div class="week">${week.join('')}</div>
+        <div class="weekstrip" id="weekStrip">${week.join('')}</div>
+        <span class="tiny" style="padding:0 4px;text-align:center">Wischen: nächste 4 Wochen · Tippen: Plan wählen</span>
       </div>
       <div class="card accent" style="gap:14px">
         <span class="label teal" style="font-size:12px">Als Nächstes · ${nextLabel}</span>
@@ -144,13 +133,11 @@
         <span class="grow" style="display:flex;flex-direction:column;gap:2px"><span class="h3" style="font-size:20px">Essen nach dem Training</span><span class="small">Ideen mit viel Eiweiß – morgens bis abends</span></span>
         <span class="muted">${I.next(20)}</span>
       </a>
-      <div class="list">
-        <div class="row-between" style="padding:0 4px"><h2 class="h2">Deine Pläne</h2><button type="button" class="pill" data-a="newPlan">+ Neuer Plan</button></div>
-        ${planCards}
-        ${G.swimPlanBox()}
-      </div>
+      ${G.swimPlanBox()}
     </div>${G.nav('home')}${daySheet}${dayOne}`;
   };
+  document.addEventListener('scroll', (e) => { if (e.target && e.target.id === 'weekStrip') G.ui.home.sx = e.target.scrollLeft; }, true);
+  G.afterRender = () => { const w = document.getElementById('weekStrip'); if (w && G.ui.home.sx) w.scrollLeft = G.ui.home.sx; };
   G.actions.homeDaysOpen = () => { G.ui.home.showDays = true; G.render(); };
   G.actions.homeDaysClose = () => { G.ui.home.showDays = false; G.render(); };
   G.actions.toggleDay = (el) => {

@@ -28,7 +28,7 @@
   G.screens.plan = (params) => {
     const id = params[0] || G.activeId();
     const u = ensure(id);
-    if (!u) { location.hash = '#/home'; return ''; }
+    if (!u) { location.hash = '#/plaene'; return ''; }
     G.setActive(id);
     const plan = getPlan(), notes = G.load(G.K.notes, {});
     const n = plan.exercises.length;
@@ -85,7 +85,7 @@
     return `<div class="screen with-bar">
       ${G.header()}
       <div style="display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line);padding-bottom:12px">
-        <div class="row-between"><a href="#/home" class="icon-btn" aria-label="Zurück zur Startseite">${I.back()}</a><span class="eyebrow">Plan bearbeiten</span><span style="width:44px"></span></div>
+        <div class="row-between"><a href="#/plaene" class="icon-btn" aria-label="Zurück zu den Plänen">${I.back()}</a><span class="eyebrow">Plan bearbeiten</span><span style="width:44px"></span></div>
         <div class="title-block">${title}<span class="small" style="font-size:14px">${n} ${n === 1 ? 'Übung' : 'Übungen'} · ${plan.exercises.reduce((s, x) => s + x.sets, 0)} Sätze gesamt</span></div>
       </div>
       <div class="list">${exCards}
@@ -180,7 +180,7 @@
   A.planDelCancel = () => { G.ui.plan.confirmDelete = false; G.render(); };
   A.planDelDo = () => {
     const rest = G.plans().filter((p) => p.id !== G.ui.plan.planId);
-    G.savePlans(rest); G.setActive(rest[0].id); G.ui.plan = null; location.hash = '#/home'; G.toast('Plan gelöscht');
+    G.savePlans(rest); G.setActive(rest[0].id); G.ui.plan = null; location.hash = '#/plaene'; G.toast('Plan gelöscht');
   };
   // Auswahl
   A.pickerOpen = () => { Object.assign(G.ui.plan, { picker: true, query: '', group: 'Alle', form: false }); G.render(); };
