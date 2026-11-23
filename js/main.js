@@ -1,7 +1,7 @@
 // Gym your Life – Start der App: Seitenwechsel, Klicks, Eingaben, Uhr
 (function () {
   const G = window.G, app = document.getElementById('app');
-  const ROUTES = ['start', 'home', 'plan', 'training', 'verlauf', 'fortschritt', 'routinen', 'essen', 'schwimmen', 'einstellungen'];
+  const ROUTES = ['start', 'home', 'plan', 'training', 'verlauf', 'fortschritt', 'routinen', 'essen', 'schwimmen', 'notiz', 'einstellungen'];
 
   const parse = () => {
     const parts = (location.hash || '').replace(/^#\/?/, '').split('/').filter(Boolean);

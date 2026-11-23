@@ -6,8 +6,8 @@
   // ---------- Verlauf ----------
   G.ui.verlauf = { openIdx: 0 };
   G.screens.verlauf = () => {
-    const all = G.history(), swims = G.swimSessions();
-    if (!all.length && !swims.length) return `<div class="screen with-nav">${G.header()}
+    const all = G.history(), swims = G.swimSessions(), frees = G.freeEntries();
+    if (!all.length && !swims.length && !frees.length) return `<div class="screen with-nav">${G.header()}
       <div class="title-block"><span class="eyebrow">Deine letzten 5 Trainings</span><h1 class="h1">Verlauf</h1></div>
       <div class="card empty">Hier erscheinen deine Trainings, sobald du das erste mit „Beenden“ abgeschlossen hast.<br><br><a href="#/home" class="btn" style="margin-top:8px">Zum Training</a></div>
     </div>${G.nav('verlauf')}`;
@@ -35,8 +35,13 @@
     const nf = last5.slice().reverse();
     const items = nf.map((s, i) => ({ date: s.x.date, gym: s, prev: nf[i + 1] }))
       .concat(swims.map((x) => ({ date: x.date, swim: x })))
+      .concat(frees.map((x) => ({ date: x.date, free: x })))
       .sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
     const cards = items.map((it, i) => {
+      if (it.free) { const d = new Date(it.free.date);
+        return `<div class="card" style="gap:8px;border-color:var(--amber)"><div class="row-between"><span style="display:flex;flex-direction:column;gap:2px"><span class="num" style="font-size:24px;line-height:1.05;text-transform:uppercase">${G.WDL[d.getDay()]}, ${d.getDate()}.${d.getMonth() + 1}.</span>
+          <span class="small"><span class="amber" style="font-weight:600">Freies Training</span>${it.free.fav ? ' · Favorit' : ''} · ${G.agoText(it.free.date)}</span></span><a href="#/notiz" class="icon-btn plain" style="color:var(--muted)" aria-label="Freies Training ansehen oder bearbeiten">${I.pencil(20)}</a></div>
+          <span style="font-size:15px;line-height:1.5;white-space:pre-wrap">${esc(it.free.text)}</span>${G.freeButtons(it.free)}</div>`; }
       if (it.swim) return G.swimCard(it.swim, { open: G.ui.verlauf.openIdx === i, toggle: `data-a="verlaufToggle" data-i="${i}"` });
       const s = it.gym;
       const open = G.ui.verlauf.openIdx === i, prev = it.prev, d = new Date(s.x.date);
@@ -62,7 +67,7 @@
         <div style="display:flex;align-items:flex-end;gap:10px;height:110px">${bars.map((b) => `<div style="flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px"><span class="num" style="font-size:14px;color:${b.lc}">${b.v}</span><div style="width:100%;height:${b.h}%;border-radius:6px 6px 0 0;background:${b.c}"></div></div>`).join('')}</div>
         <div style="display:flex;gap:10px;border-top:1px solid var(--line);padding-top:6px">${bars.map((b) => `<span style="flex:1;text-align:center;font-size:11px;color:var(--muted)">${b.d}</span>`).join('')}</div></div>`}
       ${cards}
-      <span class="tiny" style="padding:0 4px">Gelb = neuer Rekord, ↑ ↓ = Vergleich zum vorherigen Mal. Blau = Schwimmen.</span>
+      <span class="tiny" style="padding:0 4px">Gelb = neuer Rekord, ↑ ↓ = Vergleich zum vorherigen Mal. Blau = Schwimmen, Orange = freies Training.</span>
     </div>${G.nav('verlauf')}`;
   };
   G.actions.verlaufToggle = (el) => { const i = +el.dataset.i; G.ui.verlauf.openIdx = G.ui.verlauf.openIdx === i ? -1 : i; G.render(); };
@@ -74,7 +79,7 @@
     const names = [];
     all.forEach((x) => Object.keys(x.ex).forEach((n) => { if (names.indexOf(n) === -1 && x.ex[n].length && !isTimeEx(x, n)) names.push(n); }));
     const head = `${G.header()}<div class="title-block"><span class="eyebrow">So stark bist du geworden</span><h1 class="h1">Fortschritt</h1></div>`;
-    if (!names.length) return `<div class="screen with-nav">${head}<div class="card empty">Sobald du Trainings mit Gewichten abgeschlossen hast, siehst du hier für jede Übung deine Kurve und deine Rekorde.</div>${G.swimProgress()}</div>${G.nav('fortschritt')}`;
+    if (!names.length) return `<div class="screen with-nav">${head}<div class="card empty">Sobald du Trainings mit Gewichten abgeschlossen hast, siehst du hier für jede Übung deine Kurve und deine Rekorde.</div>${G.swimProgress()}${G.freeProgress()}</div>${G.nav('fortschritt')}`;
     const sel = names.indexOf(G.ui.fort.sel) !== -1 ? G.ui.fort.sel : names[0];
     const statsFor = (name) => {
       const ses = all.filter((x) => x.ex[name] && x.ex[name].length && !isTimeEx(x, name));
@@ -120,7 +125,7 @@
         <div class="card sm" style="gap:6px"><span class="label" style="font-size:12px">Trainiert</span><span class="num" style="font-size:28px;line-height:1">${st.ses.length} ${st.ses.length === 1 ? 'Training' : 'Trainings'}</span><span class="tiny">${st.reps} Wiederholungen insgesamt</span></div>
       </div>
       <div class="list"><h2 class="h2" style="padding:0 4px">Alle Rekorde</h2>${recs}</div>
-      ${G.swimProgress()}
+      ${G.swimProgress()}${G.freeProgress()}
     </div>${G.nav('fortschritt')}`;
   };
   G.actions.fortSel = (el) => { G.ui.fort.sel = el.dataset.n; G.render(); window.scrollTo(0, 0); };

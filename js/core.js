@@ -8,7 +8,7 @@
     plans: 'gyl-plaene-v1', active: 'gyl-aktiv-v1', days: 'gyl-tage-v1', last: 'gyl-letzte-werte-v1',
     hist: 'gyl-verlauf-v1', own: 'gyl-eigene-uebungen-v1', notes: 'gyl-notizen-v1', settings: 'gyl-einstellungen-v1',
     run: 'gyl-laufendes-training-v1', habits: 'gyl-gewohnheiten-v1', hlog: 'gyl-gewohnheiten-log-v1',
-    routines: 'gyl-routinen-v1', food: 'gyl-essen-ideen-v1', swim: 'gyl-schwimmen-v1'
+    routines: 'gyl-routinen-v1', food: 'gyl-essen-ideen-v1', swim: 'gyl-schwimmen-v1', weekplan: 'gyl-wochenplan-v1', free: 'gyl-freies-training-v1'
   };
   G.load = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch (e) { return fb; } };
   G.save = (k, v) => {
@@ -39,6 +39,14 @@
   G.agoText = (iso) => { const n = G.daysAgo(iso); return n === 0 ? 'heute' : n === 1 ? 'gestern' : 'vor ' + n + ' Tagen'; };
   G.uid = (p) => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   G.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  G.ymd = (d) => d.getFullYear() + '-' + G.pad(d.getMonth() + 1) + '-' + G.pad(d.getDate());
+  G.dateLabel = (v) => { if (!v) return 'Datum wählen'; const p = v.split('-').map(Number); return G.WD[new Date(p[0], p[1] - 1, p[2]).getDay()] + ', ' + G.pad(p[2]) + '.' + G.pad(p[1]) + '.' + p[0]; };
+  // Datumsfeld: sichtbar ist ein fester Kasten, das echte Datumsfeld liegt unsichtbar darüber.
+  // So kann es auf keinem Handy über den Rand hinausragen.
+  G.dateField = (id, value, inName, key, max) => `<div class="datef"><span class="datef-t" id="${id}-t">${G.dateLabel(value)}</span><span class="datef-i">${G.I.calendar(20)}</span>`
+    + `<input id="${id}" type="date" class="datef-in" value="${value || ''}"${max ? ' max="' + max + '"' : ''} data-in="${inName}" data-k="${key}" data-a="datePick" aria-label="Datum wählen"></div>`;
+  G.actions.datePick = (el) => { try { if (el.showPicker) el.showPicker(); } catch (e) {} };
+  G.dateSync = (el) => { const t = document.getElementById(el.id + '-t'); if (t) t.textContent = G.dateLabel(el.value); };
   G.ring = (pct, size, inner, bg) => `background: conic-gradient(var(--teal) 0 ${pct}%, var(--card2) ${pct}% 100%); width:${size}px; height:${size}px`;
 
   let toastT;
@@ -69,6 +77,9 @@
   const svg = (d, o) => `<svg width="${(o && o.s) || 22}" height="${(o && o.s) || 22}" viewBox="0 0 24 24" fill="${(o && o.fill) || 'none'}" stroke="${(o && o.fill) ? 'none' : 'currentColor'}" stroke-width="${(o && o.w) || 2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   G.I = {
     swim: (s) => svg('<circle cx="17" cy="6" r="2"/><path d="M4 12l5-3.5 4 2 3-2M2 17c2 0 2-1.5 4-1.5S8 17 10 17s2-1.5 4-1.5S16 17 18 17s2-1.5 4-1.5M2 21c2 0 2-1.5 4-1.5S8 21 10 21s2-1.5 4-1.5S16 21 18 21s2-1.5 4-1.5"/>', { s }),
+    star: (s, on) => svg('<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8L3.5 9.7l5.9-.8z"/>', on ? { s, fill: 'currentColor' } : { s }),
+    repeat: (s) => svg('<path d="M17 3l3 3-3 3M4 11V9a3 3 0 0 1 3-3h13M7 21l-3-3 3-3M20 13v2a3 3 0 0 1-3 3H4"/>', { s }),
+    calendar: (s) => svg('<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>', { s }),
     dumbbell: (s) => svg('<path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/>', { s }),
     list: (s) => svg('<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>', { s }),
     routine: (s) => svg('<path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4"/>', { s }),

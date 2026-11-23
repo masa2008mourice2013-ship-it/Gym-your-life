@@ -8,7 +8,7 @@
   G.fmtM = (m) => m.toLocaleString('de-DE') + ' m';
   G.fmtKm = (m) => (m >= 1000 ? String(Math.round(m / 10) / 100).replace('.', ',') + ' km' : m + ' m');
   const byDateDesc = (a, b) => new Date(b.date) - new Date(a.date);
-  const ymd = (d) => d.getFullYear() + '-' + G.pad(d.getMonth() + 1) + '-' + G.pad(d.getDate());
+  const ymd = G.ymd;
   const paceOf = (sec, dist) => G.fmtT(Math.round(sec / dist * 100));
 
   // Summen einer Einheit. Gesamtzeit nur, wenn für JEDEN Abschnitt eine Zeit eingetragen ist.
@@ -94,7 +94,7 @@
         </div></div>`).join('');
       form = `<div class="card pop" style="border:2px solid var(--blue);border-radius:18px;padding:14px">
         <span class="h2" style="font-size:22px">${u.editId ? 'Einheit bearbeiten' : 'Neue Einheit'}</span>
-        <div class="field"><label class="label" for="swdate">Datum</label><input id="swdate" type="date" class="input" value="${esc(f.date)}" data-in="swF" data-k="date"></div>
+        <div class="field"><label class="label" for="swdate">Datum</label>${G.dateField('swdate', f.date, 'swF', 'date')}</div>
         ${blocks}
         <button type="button" class="btn dashed blue" style="height:52px;font-size:15px" data-a="swAdd">${I.plus(18)}Weiteren Abschnitt hinzufügen</button>
         <span class="tiny">Ein Abschnitt = eine Strecke mit einer Technik, z. B. 400 m Kraul in 7:30. Die Zeit ist freiwillig.</span>
@@ -136,7 +136,7 @@
   };
   A.swRemove = (el) => { const f = u().f; if (f.blocks.length > 1) f.blocks = f.blocks.filter((b) => b.id !== el.dataset.id); G.render(); };
   A.swTech = (el) => { blockOf(el.dataset.id).tech = el.dataset.v; G.render(); };
-  IN.swF = (v, el) => { u().f[el.dataset.k] = v; };
+  IN.swF = (v, el) => { u().f[el.dataset.k] = v; if (el.type === 'date') G.dateSync(el); };
   IN.swB = (v, el) => { blockOf(el.dataset.id)[el.dataset.k] = v.replace(/\D/g, ''); };
 
   A.swEdit = (el) => {

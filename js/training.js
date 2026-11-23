@@ -1,6 +1,6 @@
 // Gym your Life – Training live
 (function () {
-  const G = window.G, I = G.I, esc = G.esc;
+  const G = window.G, D = G.D, I = G.I, esc = G.esc;
 
   // Training vorbereiten (oder angefangenes fortsetzen)
   G.trainingInit = () => {
@@ -22,8 +22,12 @@
       finished: false, tipDone: {}, noteEdit: false, noteDraft: '', resumed: false, summary: null
     };
     const run = G.load(G.K.run, null);
-    if (run && run.planId === active.id && run.day === new Date().toDateString() && run.log && run.log.length === plan.length) {
-      t.log = run.log; t.exIdx = Math.min(run.exIdx || 0, plan.length - 1); t.resumed = true;
+    if (run && run.planId === active.id && run.day === new Date().toDateString() && run.log) {
+      if (run.plan && run.plan.length === run.log.length) {           // mit Übungen, die heute dazugekommen sind
+        t.plan = run.plan; t.log = run.log; t.exIdx = Math.min(run.exIdx || 0, run.plan.length - 1); t.resumed = true;
+      } else if (run.log.length === plan.length) {
+        t.log = run.log; t.exIdx = Math.min(run.exIdx || 0, plan.length - 1); t.resumed = true;
+      }
     }
     G.ui.tr = t;
   };
@@ -31,7 +35,7 @@
   const persistRun = () => {
     const t = T();
     if (t.finished) { G.remove(G.K.run); return; }
-    if (t.log.some((rows) => rows.some((r) => r.done))) G.save(G.K.run, { planId: t.planId, day: new Date().toDateString(), exIdx: t.exIdx, log: t.log });
+    if (t.log.some((rows) => rows.some((r) => r.done))) G.save(G.K.run, { planId: t.planId, day: new Date().toDateString(), exIdx: t.exIdx, log: t.log, plan: t.plan.some((p) => p.temp) ? t.plan : undefined });
   };
   const bestLast = (p) => (p.last.length ? G.bestOf(p.last) : null);
   const saveSet = (ei, si, kg, reps) => {
@@ -149,7 +153,7 @@
     return `<div class="screen with-bar">
       ${G.header()}
       <div style="display:flex;flex-direction:column;gap:6px;padding:0 4px">
-        <div class="row-between"><span class="eyebrow">Übung ${ei + 1} von ${t.plan.length}</span><button type="button" class="pill white" data-a="trFinish">Beenden</button></div>
+        <div class="row-between"><span class="eyebrow">Übung ${ei + 1} von ${t.plan.length}</span><div class="row" style="gap:8px"><button type="button" class="pill" data-a="trPickOpen">${I.plus(16)}Übung</button><button type="button" class="pill white" data-a="trFinish">Beenden</button></div></div>
         <div class="row"><h1 class="h1 grow ellipsis" style="font-size:38px">${esc(t.planName)}</h1>
           <a href="#/routinen" class="pill outline" aria-label="Zu den Routinen, z. B. Aufwärmen oder Dehnen">${I.routine(18)}Routine</a></div>
         <div class="segbar" style="padding-top:6px">${t.plan.map((x, i) => `<div class="${i === ei ? 'cur' : t.log[i].every((r) => r.done) ? 'done' : ''}"></div>`).join('')}</div>
@@ -162,7 +166,7 @@
           <button type="button" class="icon-btn plain" style="color:${ei > 0 ? 'var(--text)' : 'var(--line)'}" data-a="trPrevEx" aria-label="Vorherige Übung">${I.back(20)}</button>
           <div class="grow" style="display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center">
             <h2 class="num" style="margin:0;font-size:28px;line-height:1.05">${esc(p.name)}</h2>
-            <span style="font-size:12px;color:var(--muted)">Ziel ${p.sets} × ${isTime ? G.fmtT(p.reps) + ' halten' : p.reps} · ${p.pauseOn ? 'Pause ' + G.fmtT(p.pause) : 'ohne Pause'}</span>
+            <span style="font-size:12px;color:var(--muted)">Ziel ${p.sets} × ${isTime ? G.fmtT(p.reps) + ' halten' : p.reps} · ${p.pauseOn ? 'Pause ' + G.fmtT(p.pause) : 'ohne Pause'}${p.temp ? ' · nur heute' : ''}</span>
           </div>
           <button type="button" class="icon-btn plain" style="color:${isLastEx ? 'var(--line)' : 'var(--text)'}" data-a="trNextExNav" aria-label="Nächste Übung">${I.next(20)}</button>
         </div>
@@ -187,8 +191,37 @@
       ${pauseDone ? `<div class="card soft pop num" style="text-align:center;font-size:24px;text-transform:uppercase;color:var(--teal)">Pause vorbei – weiter geht's!</div>` : ''}
       ${!timerOn && !pauseDone && !allDone && !holdOn ? `<div class="small" style="text-align:center;padding:4px 12px">${idle}</div>` : ''}
     </div>
-    <div class="bottom-bar"><button type="button" class="btn" data-a="${mainA}">${mainIcon}${mainLabel}</button></div>`;
+    <div class="bottom-bar"><button type="button" class="btn" data-a="${mainA}">${mainIcon}${mainLabel}</button></div>${t.pick ? pickerHtml(t) : ''}`;
   };
+
+  // ---------- Übung während des Trainings hinzufügen ----------
+  const allLib = () => D.LIB.concat(G.load(G.K.own, []).map((c) => Object.assign({}, c, { custom: true })));
+  function pickerHtml(t) {
+    const k = t.pick, lib = allLib(), q = k.query.trim().toLowerCase(), g = k.group;
+    const exact = lib.some((l) => l.name.toLowerCase() === q);
+    const list = lib.filter((l) => (g === 'Alle' || l.group === g) && (!q || l.name.toLowerCase().indexOf(q) !== -1));
+    const groups = ['Alle'].concat(D.GROUPS).map((label) => `<button type="button" class="chip${label === g ? ' on' : ''}" data-a="trPickGroup" data-g="${label}" aria-pressed="${label === g}">${label}</button>`).join('');
+    const form = `<div class="card active sm" style="background:var(--bg);gap:14px;flex-shrink:0">
+      <span class="h2" style="font-size:22px">Eigene Übung anlegen</span>
+      <div class="field"><label class="label" for="cname">Name der Übung</label><input id="cname" class="input" value="${esc(k.cName)}" maxlength="32" placeholder="z. B. Kabelzug seitlich" data-in="trPickCName"></div>
+      <div class="field"><span class="label">Körperbereich</span><div class="chips">${D.GROUPS.map((x) => `<button type="button" class="chip${k.cGroup === x ? ' on' : ''}" data-a="trPickCGroup" data-g="${x}">${x}</button>`).join('')}</div></div>
+      <div class="seg"><button type="button" class="${k.cMode === 'reps' ? 'on' : ''}" data-a="trPickCMode" data-m="reps">Wiederholungen</button><button type="button" class="${k.cMode === 'time' ? 'on' : ''}" data-a="trPickCMode" data-m="time">Zeit halten</button></div>
+      <div class="btns"><button type="button" class="btn ghost md" data-a="trPickFormClose">Abbrechen</button><button type="button" class="btn md" style="flex:2" data-a="trPickFormSave">Speichern &amp; hinzufügen</button></div></div>`;
+    const ownLabel = q.length > 1 && !exact ? '„' + esc(k.query.trim()) + '“ als eigene Übung anlegen' : 'Eigene Übung anlegen';
+    const items = list.map((l) => `<button type="button" class="link-area row" style="min-height:56px;padding:0 6px 0 14px;gap:12px;flex-direction:row;align-items:center;border-radius:14px;background:var(--card2);flex-shrink:0" data-a="trPickAdd" data-name="${esc(l.name)}">
+        <span class="grow" style="display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;font-weight:600">${esc(l.name)}</span>
+        <span style="font-size:12px;color:${l.custom ? 'var(--teal)' : 'var(--muted)'}">${l.custom ? 'Eigene Übung · ' : ''}${esc(l.group)}${l.mode === 'time' ? ' · Zeit ' + G.fmtT(l.hold || 60) : ''}</span></span>
+        <span style="width:32px;height:32px;border-radius:999px;background:var(--teal);color:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px">${I.plus(16)}</span></button>`).join('');
+    return `<div class="overlay" data-a="trPickClose" data-self="1"><div class="sheet" style="height:92vh" role="dialog" aria-label="Übung hinzufügen">
+      <div class="grip"></div>
+      <div class="row-between" style="padding:0 4px"><h2 class="h2" style="font-size:28px">Übung hinzufügen</h2><button type="button" class="icon-btn" data-a="trPickClose" aria-label="Schließen">${I.x(20)}</button></div>
+      <button type="button" class="switch-row inset" style="padding:8px 12px;flex-shrink:0" role="switch" aria-checked="${k.save}" data-a="trPickSave">
+        <span class="grow"><span class="t">Auch dauerhaft im Plan speichern</span><span class="h">${k.save ? 'Die Übung bleibt im Plan „' + esc(t.planName) + '“' : 'Nur für das heutige Training'}</span></span>${G.sw(k.save)}</button>
+      <div class="field"><label class="label" for="psearch">Suchen oder eigene Übung eintippen</label><input id="psearch" class="input" value="${esc(k.query)}" placeholder="z. B. Hip Thrust" data-in="trPickQuery"></div>
+      <div class="chips" style="flex-shrink:0">${groups}</div>
+      <div class="scroll" id="pickerList">${k.form ? form : `<button type="button" class="btn dashed" style="height:52px;font-size:15px;justify-content:flex-start;padding:0 14px;flex-shrink:0" data-a="trPickFormOpen">${I.plus(18)}${ownLabel}</button>${items}${list.length ? '' : '<div class="empty">Keine passende Übung gefunden – leg sie oben als eigene Übung an.</div>'}`}</div>
+    </div></div>`;
+  }
 
   // Uhr-Takt fürs Training: Timer-Anzeigen aktualisieren, Übergänge auslösen
   G.ticks.push(() => {
@@ -226,6 +259,48 @@
     const t = T(), p = t.plan[t.exIdx], v = t.tipVal;
     t.log[t.exIdx].forEach((r) => { if (!r.done) { if (p.mode === 'time') r.reps = Math.max(r.reps, v); else r.kg = Math.max(r.kg, v); } });
     t.tipDone[t.exIdx] = true; G.render();
+  };
+  A.trPickOpen = () => { T().pick = { query: '', group: 'Alle', form: false, cName: '', cGroup: 'Beine', cMode: 'reps', save: false }; G.render(); };
+  A.trPickClose = () => { T().pick = null; G.render(); };
+  A.trPickSave = () => { const k = T().pick; k.save = !k.save; G.render(); };
+  IN.trPickQuery = (v) => { T().pick.query = v; G.renderKeepFocus(); };
+  A.trPickGroup = (el) => { T().pick.group = el.dataset.g; G.render(); };
+  A.trPickFormOpen = () => {
+    const k = T().pick, q = k.query.trim(), exact = allLib().some((l) => l.name.toLowerCase() === q.toLowerCase());
+    Object.assign(k, { form: true, cName: q.length > 1 && !exact ? q : '', cGroup: k.group === 'Alle' ? 'Beine' : k.group, cMode: 'reps' }); G.render();
+  };
+  A.trPickFormClose = () => { T().pick.form = false; G.render(); };
+  IN.trPickCName = (v) => { T().pick.cName = v; };
+  A.trPickCGroup = (el) => { T().pick.cGroup = el.dataset.g; G.render(); };
+  A.trPickCMode = (el) => { T().pick.cMode = el.dataset.m; G.render(); };
+  A.trPickFormSave = () => {
+    const k = T().pick, name = k.cName.trim();
+    if (!name) { G.toast('Bitte einen Namen eingeben'); return; }
+    const item = { name, group: k.cGroup };
+    if (k.cMode === 'time') { item.mode = 'time'; item.hold = 60; }
+    G.save(G.K.own, G.load(G.K.own, []).filter((c) => c.name !== name).concat([item]));
+    addToTraining(name, item.group, item);
+  };
+  A.trPickAdd = (el) => { const l = allLib().find((x) => x.name === el.dataset.name); if (l) addToTraining(l.name, l.group, l); };
+  // Neue Übung direkt nach der aktuellen einfügen und dorthin springen
+  const addToTraining = (name, group, d) => {
+    const t = T(), save = t.pick.save, dup = t.plan.findIndex((p) => p.name === name);
+    t.pick = null;
+    t.timerEnd = 0; t.timerKind = null; t.holdEnd = 0; t.pauseDoneUntil = 0; t.noteEdit = false;
+    if (dup !== -1) { t.exIdx = dup; G.toast(name + ' ist schon im Training'); G.render(); window.scrollTo(0, 0); return; }
+    const mode = d.mode === 'time' ? 'time' : 'reps', sets = 3, hold = d.hold || 60, pause = G.settings().defaultPause;
+    const last = (G.load(G.K.last, {})[name] || []).filter(Boolean);
+    const entry = { name, key: name, group, mode, sets, reps: mode === 'time' ? hold : 10, pause, pauseOn: true, last, temp: !save };
+    const at = t.exIdx + 1, rows = [];
+    for (let i = 0; i < sets; i++) { const l = last[i] || last[last.length - 1]; rows.push({ kg: l ? l[0] : 0, reps: l ? l[1] : entry.reps, done: false }); }
+    if (save) {
+      const pos = t.plan.slice(0, at).filter((p) => !p.temp).length;
+      const item = { id: G.uid('x'), name, group, sets, reps: 10, pause };
+      if (mode === 'time') { item.mode = 'time'; item.hold = hold; }
+      G.savePlans(G.plans().map((p) => (p.id === t.planId ? Object.assign({}, p, { exercises: p.exercises.slice(0, pos).concat([item], p.exercises.slice(pos)) }) : p)));
+    }
+    t.plan.splice(at, 0, entry); t.log.splice(at, 0, rows); t.exIdx = at;
+    persistRun(); G.toast(name + (save ? ' hinzugefügt und im Plan gespeichert' : ' für heute hinzugefügt')); G.render(); window.scrollTo(0, 0);
   };
   A.trNoteEdit = () => { const t = T(); t.noteEdit = true; t.noteDraft = (G.load(G.K.notes, {})[t.plan[t.exIdx].key] || ''); G.render(); setTimeout(() => { const e = document.getElementById('trnote'); if (e) e.focus(); }, 0); };
   IN.trNoteDraft = (v) => { T().noteDraft = v; };

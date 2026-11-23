@@ -10,7 +10,7 @@ Trainings-Tagebuch für Josi: Übungen, Sätze und Wiederholungen – die App me
 - `index.html` – Startdatei
 - `styles.css` – Aussehen (Styleguide: Nachtblau, Türkis, Barlow Condensed + Inter)
 - `data.js` – Übungen, Muskeln, Sprüche, Essens-Ideen, Vorlagen
-- `js/` – die einzelnen Seiten (Start, Pläne, Training, Verlauf, Fortschritt, Routinen, Essen, Schwimmen, Einstellungen)
+- `js/` – die einzelnen Seiten (Start, Pläne, Training, Verlauf, Fortschritt, Routinen, Essen, Schwimmen, Freies Training, Einstellungen)
 - `sw.js` – Offline-Speicher · `manifest.webmanifest` – App-Name und Symbole · `icons/` – Logo und App-Symbole
 
 ## Aktualisieren

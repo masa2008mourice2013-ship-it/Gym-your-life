@@ -126,7 +126,9 @@ textarea.input { height: auto; padding: 10px 14px; line-height: 1.4; resize: non
 /* Startseite */
 .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .day { height: 76px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); color: var(--muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.day { position: relative; }
 .day.today { border: 2px solid var(--teal); }
+.day.today::after { content: ""; position: absolute; top: 5px; right: 5px; width: 9px; height: 9px; border-radius: 999px; background: #FF3B3B; box-shadow: 0 0 0 2px var(--bg); }
 .day.train { background: var(--teal); color: var(--bg); border-color: var(--teal); }
 .day .wd { font-size: 11px; font-weight: 600; text-transform: uppercase; }
 .day .dn { font-family: var(--head); font-weight: 700; font-size: 26px; line-height: 1; color: var(--text); }
@@ -216,4 +218,14 @@ textarea.input { height: auto; padding: 10px 14px; line-height: 1.4; resize: non
 .btn.blue { background: var(--blue); color: var(--bg); }
 .btn.dashed.blue { background: transparent; border: 1px dashed var(--blue); color: var(--blue); }
 .chip.b.on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
-input[type="date"] { color-scheme: dark; color: var(--text); min-width: 0; }
+.field { min-width: 0; }
+.datef { position: relative; width: 100%; height: 48px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg); overflow: hidden; display: flex; align-items: center; gap: 10px; padding: 0 14px; }
+.datef:focus-within { outline: 2px solid var(--teal); outline-offset: 2px; }
+.datef-t { flex: 1; min-width: 0; font-size: 16px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.datef-i { color: var(--teal); display: flex; flex-shrink: 0; }
+.datef-in { position: absolute; top: 0; left: 0; width: 100%; height: 100%; max-width: 100%; opacity: 0; border: 0; padding: 0; margin: 0; font-size: 16px; -webkit-appearance: none; appearance: none; background: transparent; }
+
+/* ---------- Kacheln anklickbar ---------- */
+button.day { font: inherit; padding: 0; width: 100%; cursor: pointer; }
+.day .tag.plan { overflow: hidden; text-overflow: ellipsis; letter-spacing: 0; }
+.day.train .tag.plan { font-weight: 700; }
