@@ -53,22 +53,21 @@
       <span class="tiny">Die Bilder stammen aus der Wikipedia. Passt dein Gericht nicht genau, nimm ein ähnliches oder lade ein eigenes Foto hoch. Lizenz und Urheber stehen über den Quell-Link beim Bild.</span>
       <button type="button" class="btn ghost md" data-a="pkClose">Schließen</button></div></div>`;
     const max = D.PROTEIN_CHEAT[0][1];
-    return `<div class="screen">${G.header()}
-      <div class="row" style="padding:0 4px"><a href="#/home" class="icon-btn" aria-label="Zurück zur Startseite">${I.back()}</a>
-        <div style="display:flex;flex-direction:column;gap:2px"><span class="eyebrow">Ideen mit viel Eiweiß</span><h1 class="h1" style="font-size:34px">Essen nach dem Training</h1></div></div>
+    return `<div class="screen with-nav">${G.header()}
+      <div class="title-block"><span class="eyebrow">Essen nach dem Training · Eiweiß · Wissen</span><h1 class="h1">Ernährung</h1></div>
       <div class="seg tall" style="background:var(--card)">${TABS.map((t) => `<button type="button" class="${tab === t[0] ? 'on' : ''}" data-a="foodTab" data-v="${t[0]}" aria-pressed="${tab === t[0]}">${t[1]}<small>${t[0] === nt ? 'jetzt' : t[0] === 'snack' ? 'direkt danach' : ''}</small></button>`).join('')}</div>
       <div class="chips">${[['alle', 'Alle'], ['veg', 'Vegetarisch'], ['vegan', 'Vegan']].map((d) => `<button type="button" class="chip${diet === d[0] ? ' on' : ''}" data-a="foodDiet" data-v="${d[0]}">${d[1]}</button>`).join('')}</div>
-      <div class="card soft sm row" style="flex-direction:row;align-items:flex-start"><span class="teal" style="flex-shrink:0">${I.info(22)}</span><span style="font-size:13px;line-height:1.5;color:var(--muted2)">${D.FOOD_TIPS[tab]}</span></div>
+      <button type="button" class="card soft sm row" style="flex-direction:row;align-items:center;text-align:left;color:var(--text)" data-a="wkOpen" data-t="${tab === 'mittags' ? 'Kohlenhydrate' : 'Protein'}" data-l="${tab === 'mittags' ? 'Kohlenhydrate' : 'Eiweiß (Protein)'}"><span class="teal" style="flex-shrink:0">${I.info(22)}</span><span class="grow" style="font-size:13px;line-height:1.5;color:var(--muted2)">${D.FOOD_TIPS[tab]} <span class="teal" style="font-weight:600">Mehr dazu ›</span></span></button>
       <a href="#/wissen" class="card sm row" style="color:var(--text);text-decoration:none;min-height:64px;flex-direction:row;align-items:center"><span class="ico-box">${I.info(22)}</span><span class="grow" style="display:flex;flex-direction:column;gap:2px"><span class="h3" style="font-size:19px">Wissen: Eiweiß, Kohlenhydrate &amp; Co.</span><span class="small">Was im Körper passiert – mit Artikeln aus der Wikipedia</span></span><span class="muted">${I.next(20)}</span></a>
       ${form}
       ${meals.map(card).join('') || '<div class="empty">Keine Idee für diesen Filter.</div>'}
       <section class="list" style="padding-top:6px">
         <h2 class="h2" style="padding:0 4px">Eiweiß-Spickzettel</h2>
-        <span class="tiny" style="padding:0 4px">Ungefähre Richtwerte pro 100 g – je nach Produkt etwas anders, genau steht's auf der Packung.</span>
-        <div class="card sm divide" style="gap:0;padding:4px 14px">${D.PROTEIN_CHEAT.map((c) => `<div class="row" style="min-height:40px"><span class="grow" style="font-size:14px">${c[0]}</span><div class="bar" style="width:90px"><div style="width:${Math.round(c[1] / max * 100)}%"></div></div><span class="num teal" style="width:56px;text-align:right;font-size:17px">ca. ${String(c[1]).replace('.', ',')} g</span></div>`).join('')}</div>
+        <span class="tiny" style="padding:0 4px">Ungefähre Richtwerte pro 100 g – je nach Produkt etwas anders, genau steht's auf der Packung. Tippe auf ein Lebensmittel für den Wikipedia-Artikel.</span>
+        <div class="card sm divide" style="gap:0;padding:4px 14px">${D.PROTEIN_CHEAT.map((c) => `<button type="button" class="row" style="min-height:44px;width:100%;text-align:left;color:var(--text);background:none;border:0;padding:0;font:inherit;gap:8px;align-items:center" data-a="wkOpen" data-t="${esc(c[0].replace(/\s*\(.*\)/, ''))}" data-l="${esc(c[0])}" aria-label="${esc(c[0])} – Artikel öffnen"><span class="grow" style="font-size:14px">${c[0]}</span><div class="bar" style="width:90px"><div style="width:${Math.round(c[1] / max * 100)}%"></div></div><span class="num teal" style="width:64px;text-align:right;font-size:17px;white-space:nowrap">ca. ${String(c[1]).replace('.', ',')} g</span><span class="muted">${I.next(16)}</span></button>`).join('')}</div>
         <span class="tiny" style="padding:0 4px">Allgemeine Ideen, keine Ernährungsberatung. Wer Allergien oder besondere Bedürfnisse hat, sollte das mit einer Fachperson abstimmen.</span>
       </section>
-    </div>${pkHtml}`;
+    </div>${G.nav('essen')}${pkHtml}`;
   };
 
   const A = G.actions, IN = G.inputs;

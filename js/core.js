@@ -132,7 +132,7 @@
     </div>`;
   };
   G.nav = (active) => {
-    const items = [['home', 'Training', G.I.dumbbell(24)], ['plaene', 'Pläne', G.I.list(24)], ['routinen', 'Routinen', G.I.routine(24)], ['fortschritt', 'Fortschritt', G.I.chart(24)], ['verlauf', 'Verlauf', G.I.clock(24)]];
+    const items = [['home', 'Training', G.I.dumbbell(24)], ['plaene', 'Pläne', G.I.list(24)], ['routinen', 'Routinen', G.I.routine(24)], ['essen', 'Ernährung', G.I.food(24)], ['fortschritt', 'Fortschritt', G.I.chart(24)], ['verlauf', 'Verlauf', G.I.clock(24)]];
     return `<nav class="nav" aria-label="Hauptnavigation"><div class="nav-in">${items.map((i) =>
       `<a href="#/${i[0]}" class="${active === i[0] ? 'on' : ''}"${active === i[0] ? ' aria-current="page"' : ''}>${i[2]}${i[1]}</a>`).join('')}</div></nav>`;
   };

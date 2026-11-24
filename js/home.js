@@ -148,11 +148,6 @@
       </div>
       ${G.freeBox()}
       ${G.swimPlanBox()}
-      <a href="#/essen" class="card sm row" style="color:var(--text);text-decoration:none;min-height:64px;flex-direction:row;align-items:center">
-        <span class="ico-box">${I.food(22)}</span>
-        <span class="grow" style="display:flex;flex-direction:column;gap:2px"><span class="h3" style="font-size:20px">Essen nach dem Training</span><span class="small">Ideen mit viel Eiweiß – morgens bis abends</span></span>
-        <span class="muted">${I.next(20)}</span>
-      </a>
     </div>${G.nav('home')}${daySheet}${dayOne}`;
   };
   document.addEventListener('scroll', (e) => { if (e.target && e.target.id === 'weekStrip') G.ui.home.sx = e.target.scrollLeft; }, true);

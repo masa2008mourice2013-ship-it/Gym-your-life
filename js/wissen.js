@@ -92,7 +92,7 @@
 
   // ---------- Seiten ----------
   const open = (title, label) => {
-    const w = G.ui.wiki; w.cur = { title, label: label || title }; w.st = 'load'; w.data = null; w.err = '';
+    const w = G.ui.wiki; w.back = location.hash.indexOf('#/essen') === 0 ? '#/essen' : '#/wissen'; w.cur = { title, label: label || title }; w.st = 'load'; w.data = null; w.err = '';
     const c = cacheAll()[title]; if (c) { w.data = c.d; w.st = 'ok'; w.cached = true; } else w.cached = false;
     location.hash = '#/wissen/a'; G.render(); window.scrollTo(0, 0);
     fetchArticle(title).then((d) => {
@@ -119,17 +119,17 @@
           <span class="tiny">Quelle: Wikipedia, „${esc(d.title)}“ – Text unter der Lizenz CC BY-SA 4.0, Autorinnen und Autoren in der Versionsgeschichte des Artikels. Bilder haben eigene Lizenzen (siehe Artikel).${w.cached ? ' Gespeicherte Fassung, wird bei Netz aktualisiert.' : ''}</span></div>
         <span class="tiny" style="padding:0 4px">Allgemeine Information, keine Ernährungs- oder Medizinberatung.</span>`;
     }
-    return `<div class="screen">${G.header()}
-      <div class="row" style="padding:0 4px"><a href="#/wissen" class="icon-btn" aria-label="Zurück zur Wissensliste">${I.back()}</a>
+    return `<div class="screen with-nav">${G.header()}
+      <div class="row" style="padding:0 4px"><a href="${w.back || '#/wissen'}" class="icon-btn" aria-label="Zurück">${I.back()}</a>
         <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span class="eyebrow">Wissen · aus der Wikipedia</span><h1 class="h1" style="font-size:30px;line-height:1.05">${esc(w.cur.label)}</h1></div></div>
-      ${body}</div>`;
+      ${body}</div>${G.nav('essen')}`;
   };
 
   G.screens.wissen = (params) => {
     const w = G.ui.wiki;
     if (params && params[0] === 'a' && w.cur) return article();
     const cached = cacheAll();
-    return `<div class="screen">${G.header()}
+    return `<div class="screen with-nav">${G.header()}
       <div class="row" style="padding:0 4px"><a href="#/essen" class="icon-btn" aria-label="Zurück zu Essen">${I.back()}</a>
         <div style="display:flex;flex-direction:column;gap:2px"><span class="eyebrow">Eiweiß, Kohlenhydrate, Fette und mehr</span><h1 class="h1" style="font-size:34px">Wissen</h1></div></div>
       <span class="small" style="padding:0 4px">Kurz erklärt von mir, die ganzen Artikel kommen live aus der Wikipedia. Einmal geöffnete Artikel kannst du auch ohne Netz lesen.</span>
@@ -140,7 +140,7 @@
           <span class="grow" style="display:flex;flex-direction:column;gap:2px;min-width:0"><span class="h3" style="font-size:18px">${esc(t[0])}</span><span class="small" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(t[2])}</span></span>
           ${cached[t[1]] ? `<span class="tiny teal" style="flex-shrink:0">offline</span>` : ''}<span class="muted">${I.next(20)}</span></button>`).join('')}</section>`).join('')}
       <span class="tiny" style="padding:0 4px">Texte und Bilder: Wikipedia (CC BY-SA 4.0). Allgemeine Information, keine Ernährungs- oder Medizinberatung.</span>
-    </div>`;
+    </div>${G.nav('essen')}`;
   };
 
   const A = G.actions, IN = G.inputs;

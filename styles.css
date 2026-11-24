@@ -276,3 +276,7 @@ button.day { font: inherit; padding: 0; width: 100%; cursor: pointer; }
 .wk-sec[open] summary::after { content: '▴'; }
 .wk-sec[open] { border-color: var(--teal); }
 .wk-body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+/* sechs Tabs */
+.nav-in { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px; }
+.nav a { font-size: 10.5px; gap: 3px; padding: 0 1px; }
