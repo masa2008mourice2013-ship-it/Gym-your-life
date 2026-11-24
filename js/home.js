@@ -55,12 +55,20 @@
     // Woche
     let next = null;
     const week = [];
-    for (let i = 0; i < 28; i++) {
-      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
-      const dp = dpPlan(d), train = days.indexOf(d.getDay()) !== -1 || !!dp;
-      if (train && !next) next = { i, d };
-      const tag = dp ? dp.name : i === 0 ? 'Heute' : train ? 'Training' : '';
-      week.push(`<button type="button" class="day${train ? ' train' : ''}${i === 0 ? ' today' : ''}${i % 7 === 0 ? ' snap' : ''}" data-a="dayOpen" data-wd="${d.getDay()}" data-i="${i}" aria-label="${G.WDL[d.getDay()]}, ${d.getDate()}.${d.getMonth() + 1}.${i === 0 ? ' (heute)' : ''}${dp ? ', Plan: ' + esc(dp.name) : ''} – Plan wählen"><span class="wd">${G.WD[d.getDay()]}</span><span class="dn">${d.getDate()}</span><span class="tag${dp ? ' plan' : ''}">${esc(tag)}</span></button>`);
+    // Was ist an welchem Tag schon eingetragen? (Punkte auf vergangenen Kacheln)
+    const dayMap = {}, put = (date, k) => { const key = G.ymd(new Date(date)); (dayMap[key] || (dayMap[key] = {}))[k] = true; };
+    hist.forEach((x) => put(x.date, 'gym')); G.swimSessions().forEach((x) => put(x.date, 'swim')); G.freeEntries().forEach((x) => put(x.date, 'free'));
+    const startOff = 28 + ((today.getDay() + 6) % 7);              // Tage zwischen Streifen-Anfang (Montag) und heute
+    for (let i = 0; i < 63; i++) {
+      const off = i - startOff, d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + off), key = G.ymd(d);
+      const isToday = off === 0, past = off < 0, kind = dpl[key] === 'swim' || dpl[key] === 'free' ? dpl[key] : '';
+      const dp = past ? null : dpPlan(d), train = !past && (days.indexOf(d.getDay()) !== -1 || !!dp);
+      if (train && off >= 0 && !next) next = { i: off, d };
+      const m = dayMap[key];
+      const dots = past && m ? '<span class="tag tagdots">' + (m.gym ? '<span class="cal-dot" style="background:var(--teal)"></span>' : '') + (m.swim ? '<span class="cal-dot" style="background:var(--blue)"></span>' : '') + (m.free ? '<span class="cal-dot" style="background:var(--amber)"></span>' : '') + '</span>' : '';
+      const tag = dp ? dp.name : kind === 'swim' ? 'Schwimmen' : kind === 'free' ? 'Freies' : isToday ? 'Heute' : train ? 'Training' : '';
+      const label = G.WDL[d.getDay()] + ', ' + d.getDate() + '.' + (d.getMonth() + 1) + '.' + (isToday ? ' (heute)' : '') + (dp ? ', Plan: ' + dp.name : kind === 'swim' ? ', Schwimmen geplant' : kind === 'free' ? ', Freies Training geplant' : '') + (m ? ', schon eingetragen' : '');
+      week.push(`<button type="button" class="day${train ? ' train' : ''}${kind === 'swim' ? ' sw' : kind === 'free' ? ' fr' : ''}${past ? ' past' : ''}${isToday ? ' today' : ''}${i % 7 === 0 ? ' snap' : ''}" data-a="dayOpen" data-wd="${d.getDay()}" data-i="${off}" aria-label="${esc(label)} – öffnen"><span class="wd">${G.WD[d.getDay()]}</span><span class="dn">${d.getDate()}</span>${dots || `<span class="tag${dp ? ' plan' : ''}">${esc(tag)}</span>`}</button>`);
     }
     const nextLabel = !next ? 'kein Trainingstag gewählt' : next.i === 0 ? 'heute' : next.i === 1 ? 'morgen' : G.WDL[next.d.getDay()] + ', ' + next.d.getDate() + '.' + (next.d.getMonth() + 1) + '.';
     // nächster Plan
@@ -89,20 +97,31 @@
     </div></div>` : '';
     let dayOne = '';
     if (u.dayWd !== null) {
-      const wd = u.dayWd, dd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + u.dayI), cur = dpPlan(dd), isToday = u.dayI === 0;
-      const opt = (id, title, sub, on) => `<button type="button" class="row" style="min-height:60px;width:100%;flex-shrink:0;border-radius:14px;background:var(--card2);border:${on ? '2px solid var(--teal)' : '1px solid var(--line)'};padding:0 14px;color:var(--text);text-align:left" data-a="daySetPlan" data-id="${id}" aria-pressed="${on}">
-        <span class="grow" style="display:flex;flex-direction:column;gap:2px"><span class="h3 ellipsis">${esc(title)}</span><span class="small">${sub}</span></span>${on ? `<span class="teal">${I.check(22)}</span>` : ''}</button>`;
-      dayOne = `<div class="overlay" data-a="dayClose" data-self="1"><div class="sheet" role="dialog" aria-label="${G.WDL[wd]} einstellen">
+      const wd = u.dayWd, dd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + u.dayI), key = G.ymd(dd);
+      const isToday = u.dayI === 0, past = u.dayI < 0, future = u.dayI > 0, cur = past ? null : dpPlan(dd), kind = dpl[key];
+      const opt = (id, title, sub, on, color) => `<button type="button" class="row" style="min-height:60px;width:100%;flex-shrink:0;border-radius:14px;background:var(--card2);border:${on ? '2px solid ' + (color || 'var(--teal)') : '1px solid var(--line)'};padding:0 14px;color:var(--text);text-align:left" data-a="daySetPlan" data-id="${id}" aria-pressed="${on}">
+        <span class="grow" style="display:flex;flex-direction:column;gap:2px"><span class="h3 ellipsis">${esc(title)}</span><span class="small">${sub}</span></span>${on ? `<span style="color:${color || 'var(--teal)'}">${I.check(22)}</span>` : ''}</button>`;
+      const m = dayMap[key] || {};
+      const done = [m.gym ? 'Training' : '', m.swim ? 'Schwimmen' : '', m.free ? 'Freies Training' : ''].filter(Boolean);
+      const doneHtml = done.length ? `<div class="inset" style="padding:10px 12px;border-radius:12px;display:flex;align-items:center;gap:10px;flex-shrink:0"><span class="grow" style="display:flex;flex-direction:column;gap:2px"><span class="label teal" style="font-size:12px">Schon eingetragen</span><span style="font-size:15px;font-weight:600">${done.join(' · ')}</span></span><button type="button" class="btn sec sm" data-a="dayHist">Ansehen</button></div>` : '';
+      const intro = past ? 'Dieser Tag liegt hinter dir. Trag hier nach, was du gemacht hast – zum Beispiel wenn du dein Handy nicht dabei hattest.'
+        : isToday ? 'Was hast du heute vor? Die Wahl gilt nur für heute – du entscheidest jeden Tag neu. Du musst auch nichts wählen.'
+        : 'Was möchtest du an diesem Tag machen? Die Wahl gilt nur für diesen Tag. Du musst auch nichts wählen.';
+      const entry = !future ? `${past ? `<button type="button" class="btn sm" style="flex-shrink:0" data-a="dayGym">${I.dumbbell ? I.dumbbell(18) : ''}Krafttraining nachtragen</button>` : ''}<div class="row" style="gap:8px;flex-wrap:wrap;flex-shrink:0"><button type="button" class="btn sm" style="background:var(--blue);color:var(--bg);flex:1" data-a="daySwim">${I.swim(18)}Schwimmen ${past ? 'nachtragen' : 'eintragen'}</button><button type="button" class="btn sm" style="background:var(--amber);color:var(--bg);flex:1" data-a="dayFree">${I.note(18)}Freies Training ${past ? 'nachtragen' : 'eintragen'}</button></div>` : '';
+      dayOne = `<div class="overlay" data-a="dayClose" data-self="1"><div class="sheet" role="dialog" aria-label="${G.WDL[wd]} öffnen">
         <div class="grip"></div>
-        <div><h2 class="h2" style="font-size:28px">${G.WDL[wd]}, ${dd.getDate()}.${dd.getMonth() + 1}.</h2>
-          <span class="small">${isToday ? 'Was hast du heute vor?' : 'Was möchtest du an diesem Tag trainieren?'} Die Wahl gilt nur für diesen Tag – du entscheidest jeden Tag neu. Du musst auch keinen Plan wählen.</span></div>
-        <div class="scroll" style="gap:8px">
-          ${opt('', 'Noch offen', 'Die App schlägt den nächsten Plan vor', !cur)}
+        <div><h2 class="h2" style="font-size:28px">${G.WDL[wd]}, ${dd.getDate()}.${dd.getMonth() + 1}.${past ? '' : isToday ? ' · heute' : ''}</h2>
+          <span class="small">${intro}</span></div>
+        ${doneHtml}
+        ${past ? '' : `<div class="scroll" style="gap:8px">
+          ${opt('', 'Noch offen', 'Die App schlägt den nächsten Plan vor', !cur && !kind)}
           ${plans.map((p) => opt(p.id, p.name, p.exercises.length + ' Übungen', !!cur && cur.id === p.id)).join('')}
-        </div>
+          ${opt('swim', 'Schwimmen', 'Ich gehe schwimmen', kind === 'swim', 'var(--blue)')}
+          ${opt('free', 'Freies Training', 'Etwas ohne festen Plan', kind === 'free', 'var(--amber)')}
+        </div>`}
         ${isToday && cur ? `<a href="#/training" class="btn md" data-a="setActive" data-id="${cur.id}">${I.play(18)}${esc(cur.name)} jetzt starten</a>` : ''}
-        ${isToday ? `<a href="#/notiz" class="btn outline md" style="border-color:var(--amber);color:var(--amber)">${I.note(18)}Freies Training notieren</a>`
-          : `<span class="tiny">Freies Training (nur Notizen) kannst du am Tag selbst eintragen.</span>`}
+        ${entry}
+        ${future ? '<span class="tiny">Eintragen, was du gemacht hast, kannst du am Tag selbst oder danach.</span>' : ''}
         <button type="button" class="btn ghost md" data-a="dayClose">Fertig</button>
       </div></div>`;
     }
@@ -113,7 +132,7 @@
         <div class="row-between" style="padding:0 4px"><h2 class="h2" style="font-size:22px">Deine Trainingstage</h2>
           <button type="button" class="pill white" data-a="homeDaysOpen"><span class="teal">${I.sliders(18)}</span>Tage einstellen</button></div>
         <div class="weekstrip" id="weekStrip">${week.join('')}</div>
-        <span class="tiny" style="padding:0 4px;text-align:center">Wischen: nächste 4 Wochen · Tippen: Plan wählen</span>
+        <span class="tiny" style="padding:0 4px;text-align:center">Wischen: andere Wochen · Tippen: Tag wählen oder nachtragen</span>
       </div>
       <div class="card accent" style="gap:14px">
         <span class="label teal" style="font-size:12px">Als Nächstes · ${nextLabel}</span>
@@ -137,7 +156,11 @@
     </div>${G.nav('home')}${daySheet}${dayOne}`;
   };
   document.addEventListener('scroll', (e) => { if (e.target && e.target.id === 'weekStrip') G.ui.home.sx = e.target.scrollLeft; }, true);
-  G.afterRender = () => { const w = document.getElementById('weekStrip'); if (w && G.ui.home.sx) w.scrollLeft = G.ui.home.sx; };
+  G.afterRender = () => {
+    const w = document.getElementById('weekStrip'); if (!w) return;
+    if (G.ui.home.sx == null && w.children.length > 28) G.ui.home.sx = w.children[28].offsetLeft - w.children[0].offsetLeft;   // aktuelle Woche zeigen
+    w.scrollLeft = G.ui.home.sx || 0;
+  };
   G.actions.homeDaysOpen = () => { G.ui.home.showDays = true; G.render(); };
   G.actions.homeDaysClose = () => { G.ui.home.showDays = false; G.render(); };
   G.actions.toggleDay = (el) => {
@@ -147,12 +170,19 @@
   };
   G.actions.dayOpen = (el) => { Object.assign(G.ui.home, { dayWd: +el.dataset.wd, dayI: +el.dataset.i }); G.render(); };
   G.actions.dayClose = () => { G.ui.home.dayWd = null; G.render(); };
+  const dayKey = () => { const n = new Date(); return G.ymd(new Date(n.getFullYear(), n.getMonth(), n.getDate() + G.ui.home.dayI)); };
+  G.actions.dayGym = () => { const k = dayKey(); G.ui.home.dayWd = null; G.ntStart(k); location.hash = '#/nachtrag'; };
+  G.actions.dayFree = () => { const k = dayKey(); G.ui.home.dayWd = null; G.freeStart(k); location.hash = '#/notiz'; };
+  G.actions.daySwim = () => { const k = dayKey(); G.ui.home.dayWd = null; G.actions.swNew(); G.ui.swim.f.date = k; location.hash = '#/schwimmen'; };
+  G.actions.dayHist = () => { const k = dayKey(); G.ui.home.dayWd = null; Object.assign(G.ui.verlauf, { sel: k, month: k.slice(0, 7), calOpen: true }); location.hash = '#/verlauf'; };
   G.actions.daySetPlan = (el) => {
     const h = G.ui.home, now = new Date(), d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + h.dayI), key = G.ymd(d), id = el.dataset.id;
     const dpl = G.load(G.K.dayplan, {}), cut = G.ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
     Object.keys(dpl).forEach((k) => { if (k < cut) delete dpl[k]; });   // alte Tage aufräumen
+    if (h.dayI < 0) return;
     const when = G.WDL[d.getDay()] + ', ' + d.getDate() + '.' + (d.getMonth() + 1) + '.';
-    if (id) { dpl[key] = id; G.toast(when + ': ' + G.plans().find((p) => p.id === id).name); }
+    if (id === 'swim' || id === 'free') { dpl[key] = id; G.toast(when + ': ' + (id === 'swim' ? 'Schwimmen' : 'Freies Training')); }
+    else if (id) { dpl[key] = id; G.toast(when + ': ' + G.plans().find((p) => p.id === id).name); }
     else { delete dpl[key]; G.toast(when + ': noch offen'); }
     G.save(G.K.dayplan, dpl); G.render();
   };

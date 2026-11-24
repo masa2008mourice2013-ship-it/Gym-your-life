@@ -190,7 +190,7 @@
     const rows = list.map((t) => `<div class="card sm row" style="flex-direction:row;align-items:center;gap:12px;min-height:60px">
       <span class="grow" style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600">${esc(t.name)}</span><span style="font-size:12px;color:var(--muted)">${G.fmtKm(t.dist)} · ${t.n}× geschwommen</span></span>
       <span style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">${t.best !== null ? `<span class="num amber" style="font-size:22px;line-height:1">${G.fmtT(t.best)} / 100 m</span><span style="font-size:12px;color:var(--muted)">Bestes Tempo · ${G.fmtD(t.bestDate)}</span>` : `<span style="font-size:12px;color:var(--muted)">noch kein Tempo</span>`}</span></div>`).join('');
-    return `<div class="list" style="padding-top:6px"><h2 class="h2" style="padding:0 4px">Schwimmen</h2>
+    return `<div class="list">
       <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
         <div class="card blue sm" style="gap:6px"><span class="label txt-blue" style="font-size:12px">Einheiten</span><span class="num" style="font-size:28px;line-height:1">${all.length}</span><span class="tiny">zuletzt ${G.agoText(all[all.length - 1].date)}</span></div>
         <div class="card blue sm" style="gap:6px"><span class="label txt-blue" style="font-size:12px">Geschwommen</span><span class="num" style="font-size:28px;line-height:1">${G.fmtKm(totalM)}</span><span class="tiny">insgesamt</span></div>

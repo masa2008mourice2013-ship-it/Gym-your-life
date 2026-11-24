@@ -248,3 +248,13 @@ button.day { font: inherit; padding: 0; width: 100%; cursor: pointer; }
 .cal-day.today { background: var(--amber); border-color: var(--amber); color: var(--bg); }
 .cal-day.sel { outline: 2px solid var(--teal); outline-offset: 1px; }
 .cal-day:disabled { opacity: .35; cursor: default; }
+
+/* ---------- Kacheln: Schwimmen / Freies geplant, vergangene Tage ---------- */
+.day.sw { background: var(--blue-soft); border-color: var(--blue); }
+.day.sw .wd, .day.sw .tag { color: var(--blue); }
+.day.fr { background: var(--amber-soft); border-color: var(--amber); }
+.day.fr .wd, .day.fr .tag { color: var(--amber); }
+.day.past { opacity: .8; }
+.day .tag.tagdots { display: flex; justify-content: center; gap: 3px; min-height: 8px; }
+.day.today { background: var(--amber); border: 2px solid var(--amber); color: var(--bg); }
+.day.today .wd, .day.today .dn, .day.today .tag { color: var(--bg); }

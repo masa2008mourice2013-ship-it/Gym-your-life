@@ -161,7 +161,7 @@
       wk.push({ v: useMin ? inW.reduce((s, x) => s + (x.min || 0), 0) : inW.length, d: G.pad(a.getDate()) + '.' + G.pad(a.getMonth() + 1) + '.', cur: i === 0 }); }
     const maxW = Math.max.apply(null, wk.map((w) => w.v).concat([1]));
     const bars = wk.map((w) => `<div style="flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px"><span class="num" style="font-size:13px;color:${w.cur ? 'var(--amber)' : 'var(--muted)'}">${w.v || ''}</span><div style="width:100%;height:${w.v ? Math.max(8, Math.round(w.v / maxW * 80)) : 3}%;border-radius:6px 6px 0 0;background:${w.cur ? 'var(--amber)' : 'var(--line)'}"></div></div>`).join('');
-    return `<div class="list" style="padding-top:6px"><h2 class="h2" style="padding:0 4px">Freies Training</h2>
+    return `<div class="list">
       <div class="stats">
         <div class="stat" style="border-color:var(--amber)"><span class="num amber">${all.length}</span><span>${all.length === 1 ? 'Eintrag' : 'Einträge'}</span></div>
         <div class="stat" style="border-color:var(--amber)"><span class="num">${minWeek}</span><span>Min. diese Woche</span></div>

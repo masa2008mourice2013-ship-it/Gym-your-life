@@ -80,7 +80,7 @@
     let detail = '';
     if (dm) detail += dm.gym.map((g) => gymCard(g.s, g.prev, true, '')).join('') + dm.swim.map((x) => G.swimCard(x, { open: true, toggle: '' })).join('') + dm.free.map((x) => G.freeCard(x)).join('');
     else detail = '<div class="card empty" style="padding:18px">An diesem Tag ist nichts eingetragen.</div>';
-    const add = V.sel <= todayKey ? `<div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn sec sm" data-a="calFree">${I.note(16)}Freies Training eintragen</button><button type="button" class="btn sec sm" data-a="calSwim">${I.swim(16)}Schwimmen eintragen</button></div>` : '';
+    const add = V.sel <= todayKey ? `<div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn sec sm" data-a="calGym">Krafttraining eintragen</button><button type="button" class="btn sec sm" data-a="calFree">${I.note(16)}Freies Training eintragen</button><button type="button" class="btn sec sm" data-a="calSwim">${I.swim(16)}Schwimmen eintragen</button></div>` : '';
     const calendar = `<div class="card" style="gap:12px">
       <button type="button" class="link-area" style="flex-direction:row;align-items:center;justify-content:space-between;width:100%" data-a="calToggle" aria-expanded="${V.calOpen}"><span class="h2" style="font-size:22px">Kalenderblatt</span><span class="muted">${V.calOpen ? I.up(20) : I.down(20)}</span></button>
       ${V.calOpen ? `<div class="row-between"><button type="button" class="icon-btn" data-a="calPrev" aria-label="Voriger Monat">${I.back()}</button><span class="num" style="font-size:22px;text-align:center">${MON[mm - 1]} ${my}</span><button type="button" class="icon-btn" data-a="calNext" ${isCur ? 'disabled style="opacity:.3"' : ''} aria-label="Nächster Monat">${I.next(20)}</button></div>` : ''}
@@ -102,27 +102,37 @@
   G.actions.calPrev = () => shiftMonth(-1);
   G.actions.calNext = () => { if (G.ui.verlauf.month < G.ymd(new Date()).slice(0, 7)) shiftMonth(1); };
   G.actions.calSel = (el) => { G.ui.verlauf.sel = el.dataset.d; G.render(); };
+  G.actions.calGym = () => { G.ntStart(G.ui.verlauf.sel); location.hash = '#/nachtrag'; };
   G.actions.calFree = () => { G.freeStart(G.ui.verlauf.sel); location.hash = '#/notiz'; };
   G.actions.calSwim = () => { G.actions.swNew(); G.ui.swim.f.date = G.ui.verlauf.sel; location.hash = '#/schwimmen'; };
   G.actions.verlaufToggle = (el) => { const i = +el.dataset.i; G.ui.verlauf.openIdx = G.ui.verlauf.openIdx === i ? -1 : i; G.render(); };
 
   // ---------- Fortschritt ----------
-  G.ui.fort = { sel: null };
+  G.ui.fort = { open: null, sect: { gym: true, swim: false, free: false } };
   G.screens.fortschritt = () => {
-    const all = G.history();
+    const all = G.history(), F = G.ui.fort;
     const names = [];
     all.forEach((x) => Object.keys(x.ex).forEach((n) => { if (names.indexOf(n) === -1 && x.ex[n].length && !isTimeEx(x, n)) names.push(n); }));
     const head = `${G.header()}<div class="title-block"><span class="eyebrow">So stark bist du geworden</span><h1 class="h1">Fortschritt</h1></div>`;
-    if (!names.length) return `<div class="screen with-nav">${head}<div class="card empty">Sobald du Trainings mit Gewichten abgeschlossen hast, siehst du hier für jede Übung deine Kurve und deine Rekorde.</div>${G.swimProgress()}${G.freeProgress()}</div>${G.nav('fortschritt')}`;
-    const sel = names.indexOf(G.ui.fort.sel) !== -1 ? G.ui.fort.sel : names[0];
+    // Einklappbarer Bereich
+    const sect = (key, title, sub, body, color) => !body ? '' : `<div class="card" style="padding:0;gap:0${F.sect[key] ? ';border-color:' + color : ''}">
+      <button type="button" class="link-area" style="flex-direction:row;align-items:center;gap:12px;padding:14px 16px;min-height:64px" data-a="fortSect" data-k="${key}" aria-expanded="${!!F.sect[key]}">
+        <span class="grow" style="display:flex;flex-direction:column;gap:2px"><span class="h2" style="font-size:24px">${title}</span><span class="small">${sub}</span></span><span class="muted">${F.sect[key] ? I.up(22) : I.down(22)}</span></button>
+      ${F.sect[key] ? `<div style="padding:0 12px 14px;display:flex;flex-direction:column;gap:10px">${body}</div>` : ''}</div>`;
+    const nSw = G.swimSessions().length, nFr = G.freeEntries().length;
+    const extras = sect('swim', 'Schwimmen', nSw + (nSw === 1 ? ' Einheit' : ' Einheiten'), G.swimProgress(), 'var(--blue)')
+      + sect('free', 'Freies Training', nFr + (nFr === 1 ? ' Eintrag' : ' Einträge'), G.freeProgress(), 'var(--amber)');
+    if (!names.length) return `<div class="screen with-nav">${head}<div class="card empty">Sobald du Trainings mit Gewichten abgeschlossen hast, siehst du hier für jede Übung deine Kurve und deine Rekorde.</div>${extras}</div>${G.nav('fortschritt')}`;
     const statsFor = (name) => {
       const ses = all.filter((x) => x.ex[name] && x.ex[name].length && !isTimeEx(x, name));
       let pr = null, prDate = '', reps = 0;
       const bests = ses.map((x) => { let b = 0; x.ex[name].forEach((r) => { reps += r[1]; if (r[0] > b) b = r[0]; if (!pr || r[0] > pr[0] || (r[0] === pr[0] && r[1] > pr[1])) { pr = r; prDate = x.date; } }); return b; });
       return { ses, bests, pr, prDate, reps };
     };
-    const st = statsFor(sel), shown = st.ses.slice(-8), vals = st.bests.slice(-8), n = vals.length;
-    const W = 326, top = 30, bottom = 140, padX = 26, maxV = Math.max.apply(null, vals), minV = Math.min.apply(null, vals), span = maxV - minV || 1;
+    // Kurve und Zahlen einer Übung ("Fenster im Fenster")
+    const detail = (name) => {
+    const st = statsFor(name), shown = st.ses.slice(-8), vals = st.bests.slice(-8), n = vals.length;
+    const W = 290, top = 30, bottom = 140, padX = 26, maxV = Math.max.apply(null, vals), minV = Math.min.apply(null, vals), span = maxV - minV || 1;
     const pts = vals.map((v, i) => [Math.round(n === 1 ? W / 2 : padX + i * (W - 2 * padX) / (n - 1)), Math.round(maxV === minV ? (top + bottom) / 2 : bottom - (v - minV) / span * (bottom - top))]);
     const line = 'M' + pts.map((p) => p[0] + ' ' + p[1]).join(' L');
     const area = line + ' L' + pts[n - 1][0] + ' ' + bottom + ' L' + pts[0][0] + ' ' + bottom + ' Z';
@@ -136,19 +146,14 @@
         <span style="position:absolute;left:${p[0] - 26}px;top:148px;width:52px;text-align:center;font-size:11px;color:var(--muted)">${G.fmtD(shown[i].date)}</span>`;
     }).join('');
     const first = st.bests[0], last = st.bests[st.bests.length - 1], diff = last - first, pct = first ? Math.round(diff / first * 100) : 0;
-    const recs = names.map((name) => { const s = statsFor(name), g = s.bests[s.bests.length - 1] - s.bests[0];
-      return `<button type="button" class="link-area row" style="min-height:60px;border:${name === sel ? '2px solid var(--teal)' : '1px solid var(--line)'};border-radius:14px;background:var(--card);padding:10px 14px;gap:12px;flex-direction:row;align-items:center" data-a="fortSel" data-n="${esc(name)}">
-        <span class="grow" style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600">${esc(name)}</span><span style="font-size:12px;color:var(--muted)">Rekord am ${G.fmtD(s.prDate)} · ${s.ses.length}× trainiert</span></span>
-        <span style="display:flex;flex-direction:column;align-items:flex-end;gap:2px"><span class="num amber" style="font-size:22px;line-height:1">${G.fmtKg(s.pr[0])} kg × ${s.pr[1]}</span><span style="font-size:12px;font-weight:600;color:var(--teal)">${g > 0 ? '+' + G.fmtKg(g) + ' kg seit Start' : 'noch kein Plus'}</span></span></button>`; }).join('');
-    return `<div class="screen with-nav">${head}
-      <div class="chips">${names.map((nm) => `<button type="button" class="chip${nm === sel ? ' on' : ''}" style="height:44px" data-a="fortSel" data-n="${esc(nm)}">${esc(nm)}</button>`).join('')}</div>
-      <div class="card">
+      return `<div style="margin:0 12px 12px;padding:14px 12px;border-radius:14px;background:var(--bg);border:1px solid var(--line);display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;flex-direction:column;gap:12px">
         <div class="row-between" style="align-items:flex-end"><div style="display:flex;flex-direction:column;gap:2px"><span class="label" style="font-size:12px">Höchstes Gewicht</span>
           <div class="row" style="gap:6px;align-items:baseline"><span class="num teal" style="font-size:52px;line-height:1">${G.fmtKg(last)}</span><span class="num muted" style="font-size:22px;font-weight:600">kg</span></div></div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;padding-bottom:6px"><span class="num" style="font-size:24px;line-height:1;color:${diff > 0 ? 'var(--teal)' : diff < 0 ? 'var(--coral)' : 'var(--muted)'}">${diff > 0 ? '+' : diff < 0 ? '' : '± '}${G.fmtKg(diff)} kg</span><span style="font-size:12px;color:var(--muted)">${st.bests.length > 1 ? (pct > 0 ? '+' : '') + pct + ' % seit ' + G.fmtD(st.ses[0].date) : 'erst ein Training'}</span></div></div>
-        <div style="position:relative;width:326px;height:170px;max-width:100%;align-self:center">
-          <svg width="326" height="170" viewBox="0 0 326 170" aria-hidden="true" style="position:absolute;inset:0">
-            <line x1="0" y1="30" x2="326" y2="30" stroke="#2A3A57" stroke-dasharray="3 5"/><line x1="0" y1="85" x2="326" y2="85" stroke="#2A3A57" stroke-dasharray="3 5"/><line x1="0" y1="140" x2="326" y2="140" stroke="#2A3A57"/>
+        <div style="position:relative;width:290px;height:170px;max-width:100%;align-self:center">
+          <svg width="290" height="170" viewBox="0 0 290 170" aria-hidden="true" style="position:absolute;inset:0">
+            <line x1="0" y1="30" x2="290" y2="30" stroke="#2A3A57" stroke-dasharray="3 5"/><line x1="0" y1="85" x2="290" y2="85" stroke="#2A3A57" stroke-dasharray="3 5"/><line x1="0" y1="140" x2="290" y2="140" stroke="#2A3A57"/>
             <path d="${area}" fill="#2DD4BF" fill-opacity=".12"/><path class="draw" d="${line}" fill="none" stroke="#2DD4BF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           ${dots}
         </div>
@@ -158,9 +163,20 @@
         <div class="card amber sm" style="gap:6px"><span class="label amber row" style="gap:6px;font-size:12px">${I.trophy(16)}Rekord</span><span class="num" style="font-size:28px;line-height:1">${G.fmtKg(st.pr[0])} kg × ${st.pr[1]}</span><span style="font-size:12px;color:var(--muted2)">am ${G.fmtD(st.prDate)}</span></div>
         <div class="card sm" style="gap:6px"><span class="label" style="font-size:12px">Trainiert</span><span class="num" style="font-size:28px;line-height:1">${st.ses.length} ${st.ses.length === 1 ? 'Training' : 'Trainings'}</span><span class="tiny">${st.reps} Wiederholungen insgesamt</span></div>
       </div>
-      <div class="list"><h2 class="h2" style="padding:0 4px">Alle Rekorde</h2>${recs}</div>
-      ${G.swimProgress()}${G.freeProgress()}
+      </div>`;
+    };
+    const rows = names.map((name) => { const s = statsFor(name), g = s.bests[s.bests.length - 1] - s.bests[0], open = F.open === name;
+      return `<div class="card" style="padding:0;gap:0${open ? ';border:2px solid var(--teal)' : ''}">
+        <button type="button" class="link-area row" style="min-height:64px;padding:10px 14px;gap:12px;flex-direction:row;align-items:center" data-a="fortOpen" data-n="${esc(name)}" aria-expanded="${open}">
+          <span class="grow" style="display:flex;flex-direction:column;gap:2px;min-width:0"><span class="ellipsis" style="font-size:16px;font-weight:600">${esc(name)}</span><span style="font-size:12px;color:var(--muted)">${s.ses.length}× trainiert · Rekord am ${G.fmtD(s.prDate)}</span></span>
+          <span style="display:flex;flex-direction:column;align-items:flex-end;gap:2px"><span class="num amber" style="font-size:20px;line-height:1">${G.fmtKg(s.pr[0])} kg × ${s.pr[1]}</span><span style="font-size:12px;font-weight:600;color:${g > 0 ? 'var(--teal)' : 'var(--muted)'}">${g > 0 ? '+' + G.fmtKg(g) + ' kg' : 'noch kein Plus'}</span></span>
+          <span class="muted">${open ? I.up(20) : I.down(20)}</span></button>
+        ${open ? detail(name) : ''}</div>`; }).join('');
+    return `<div class="screen with-nav">${head}
+      ${sect('gym', 'Meine Übungen', names.length + (names.length === 1 ? ' Übung' : ' Übungen') + ' · antippen für die Kurve', `<div class="list" style="gap:8px">${rows}</div>`, 'var(--teal)')}
+      ${extras}
     </div>${G.nav('fortschritt')}`;
   };
-  G.actions.fortSel = (el) => { G.ui.fort.sel = el.dataset.n; G.render(); window.scrollTo(0, 0); };
+  G.actions.fortOpen = (el) => { const F = G.ui.fort; F.open = F.open === el.dataset.n ? null : el.dataset.n; G.render(); };
+  G.actions.fortSect = (el) => { const F = G.ui.fort, k = el.dataset.k; F.sect[k] = !F.sect[k]; G.render(); };
 })();
