@@ -2,6 +2,9 @@
 (function () {
   const G = window.G, I = G.I, esc = G.esc;
   G.ui.set = { confirm: false };
+  const BODY = [['height', 'Größe', 'cm'], ['weight', 'Gewicht', 'kg'], ['chest', 'Brust', 'cm'], ['waist', 'Taille', 'cm'], ['hips', 'Hüfte', 'cm'], ['arm', 'Oberarm', 'cm'], ['thigh', 'Oberschenkel', 'cm']];
+  G.avatar = (s, px) => s.photo ? `<img src="${s.photo}" alt="Profilbild" style="width:${px}px;height:${px}px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--teal)">`
+    : `<span aria-hidden="true" style="width:${px}px;height:${px}px;border-radius:50%;flex-shrink:0;border:2px solid var(--line);background:var(--card2);color:var(--teal);display:flex;align-items:center;justify-content:center;font-family:var(--head);font-weight:700;font-size:${Math.round(px*0.45)}px">${esc((s.name || 'J').trim().charAt(0).toUpperCase() || 'J')}</span>`;
   const ALL_KEYS = () => Object.keys(G.K).map((k) => G.K[k]);
 
   G.screens.einstellungen = () => {
@@ -19,7 +22,22 @@
           : `<span style="font-size:14px;line-height:1.5">Im Browser-Menü (⋮ oben rechts) <b>„App installieren“</b> oder <b>„Zum Startbildschirm hinzufügen“</b> wählen.</span>`}</div></section>`}
 
       <section class="list"><h2 class="label teal" style="font-size:12px;letter-spacing:1.5px;padding:0 4px">Profil</h2>
-        <div class="card sm field"><label for="sname" style="font-size:14px;font-weight:600">Dein Name</label><input id="sname" class="input" value="${esc(s.name)}" maxlength="20" data-in="setName"><span class="tiny">Erscheint in der Begrüßung auf der Startseite.</span></div></section>
+        <div class="card sm" style="gap:14px">
+          <div class="row" style="gap:14px">
+            ${G.avatar(s, 84)}
+            <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+              <label class="btn sec sm" style="cursor:pointer;width:auto;padding:0 16px">${I.camera(18)}${s.photo ? 'Foto ändern' : 'Foto wählen'}<input type="file" accept="image/*" class="sr" data-file="profilePhoto" aria-label="Profilbild wählen"></label>
+              ${s.photo ? `<button type="button" class="btn danger-ghost sm" style="width:auto;padding:0 16px" data-a="photoDel">Foto entfernen</button>` : ''}
+            </div></div>
+          <div class="field"><label for="sname" style="font-size:14px;font-weight:600">Dein Name</label><input id="sname" class="input" value="${esc(s.name)}" maxlength="20" data-in="setName"><span class="tiny">Erscheint in der Begrüßung auf der Startseite.</span></div>
+        </div></section>
+
+      <section class="list"><h2 class="label teal" style="font-size:12px;letter-spacing:1.5px;padding:0 4px">Meine Maße</h2>
+        <div class="card sm" style="gap:12px">
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">${BODY.map((f) => `<div class="field" style="gap:4px"><label for="b-${f[0]}" style="font-size:13px;font-weight:600">${f[1]}</label>
+            <div style="position:relative"><input id="b-${f[0]}" class="input" style="padding-right:44px" inputmode="decimal" maxlength="6" value="${esc((s.body || {})[f[0]] || '')}" placeholder="–" data-in="setBody" data-k="${f[0]}"><span class="muted" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none">${f[2]}</span></div></div>`).join('')}</div>
+          <span class="tiny" id="bodyStand">${(s.body || {}).date ? 'Zuletzt geändert am ' + G.dateLabel(s.body.date) + '.' : 'Alles optional – nur für dich, bleibt auf diesem Handy.'}</span>
+        </div></section>
 
       <section class="list"><h2 class="label teal" style="font-size:12px;letter-spacing:1.5px;padding:0 4px">Training</h2>
         <div class="card sm divide" style="gap:0;padding:4px 14px">
@@ -58,6 +76,23 @@
 
   const A = G.actions, IN = G.inputs;
   IN.setName = (v) => G.setSettings({ name: v });
+  IN.setBody = (v, el) => {
+    const s = G.settings(), body = Object.assign({}, s.body || {}), k = el.dataset.k;
+    body[k] = v.replace(/[^0-9.,]/g, ''); body.date = G.ymd(new Date());
+    G.setSettings({ body });
+    const t = document.getElementById('bodyStand'); if (t) t.textContent = 'Zuletzt geändert am ' + G.dateLabel(body.date) + '.';
+  };
+  A.photoDel = () => { G.setSettings({ photo: '' }); G.render(); };
+  G.files.profilePhoto = (file) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const S = 320, m = Math.min(img.width, img.height), c = document.createElement('canvas'); c.width = c.height = S;
+      c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, S, S);
+      URL.revokeObjectURL(url); G.setSettings({ photo: c.toDataURL('image/jpeg', 0.8) }); G.toast('Profilbild gespeichert'); G.render();
+    };
+    img.onerror = () => G.toast('Das Bild konnte nicht gelesen werden');
+    img.src = url;
+  };
   A.setStep = (el) => { G.setSettings({ kgStep: +el.dataset.v }); G.render(); };
   A.setPause = (el) => { const s = G.settings(); G.setSettings({ defaultPause: G.clamp(s.defaultPause + +el.dataset.d * 15, 15, 300) }); G.render(); };
   A.setToggle = (el) => { const k = el.dataset.k, s = G.settings(); G.setSettings({ [k]: !s[k] }); G.render(); };

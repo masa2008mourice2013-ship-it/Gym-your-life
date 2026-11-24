@@ -258,3 +258,21 @@ button.day { font: inherit; padding: 0; width: 100%; cursor: pointer; }
 .day .tag.tagdots { display: flex; justify-content: center; gap: 3px; min-height: 8px; }
 .day.today { background: var(--amber); border: 2px solid var(--amber); color: var(--bg); }
 .day.today .wd, .day.today .dn, .day.today .tag { color: var(--bg); }
+
+/* Karteikarten-Trommel + Kalender (freies Training) */
+.drum { height: 300px; overflow-y: auto; scroll-snap-type: y mandatory; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 12px; padding: 40px 0; scroll-padding: 40px 0; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%); scrollbar-width: none; }
+.drum::-webkit-scrollbar { display: none; }
+.drum-i { scroll-snap-align: center; flex-shrink: 0; }
+.fcal-day { height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--muted); font: inherit; padding: 0; display: flex; align-items: center; justify-content: center; cursor: default; }
+.fcal-day.has { background: var(--amber); border-color: var(--amber); color: var(--bg); cursor: pointer; }
+.fcal-day.today:not(.has) { border-color: var(--teal); color: var(--text); }
+.fcal-day.sel { outline: 2px solid var(--teal); outline-offset: 1px; }
+
+/* Wissen */
+.wk-sec { border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+.wk-sec summary { list-style: none; cursor: pointer; padding: 14px 16px; min-height: 48px; font-weight: 600; font-size: 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.wk-sec summary::-webkit-details-marker { display: none; }
+.wk-sec summary::after { content: '▾'; color: var(--muted); }
+.wk-sec[open] summary::after { content: '▴'; }
+.wk-sec[open] { border-color: var(--teal); }
+.wk-body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; }

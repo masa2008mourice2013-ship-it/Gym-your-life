@@ -127,7 +127,7 @@
     }
     return `<div class="screen with-nav">
       ${G.header()}
-      <div class="title-block"><span class="eyebrow">Schön, dass du da bist</span><h1 class="h1" style="font-size:38px">Hallo ${esc(s.name.trim() || 'Josi')}</h1></div>
+      <div class="row-between" style="align-items:center;gap:12px"><div class="title-block"><span class="eyebrow">Schön, dass du da bist</span><h1 class="h1" style="font-size:38px">Hallo ${esc(s.name.trim() || 'Josi')}</h1></div>${s.photo ? `<a href="#/einstellungen" aria-label="Profil bearbeiten" style="display:flex">${G.avatar(s, 56)}</a>` : ''}</div>
       <div style="display:flex;flex-direction:column;gap:10px">
         <div class="row-between" style="padding:0 4px"><h2 class="h2" style="font-size:22px">Deine Trainingstage</h2>
           <button type="button" class="pill white" data-a="homeDaysOpen"><span class="teal">${I.sliders(18)}</span>Tage einstellen</button></div>

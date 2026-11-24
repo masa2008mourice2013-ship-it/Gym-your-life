@@ -135,6 +135,11 @@
     G.save(G.K.free, list); const f = list.find((y) => y.id === el.dataset.id);
     G.toast(f && f.fav ? 'Als Favorit gespeichert' : 'Favorit entfernt'); G.render();
   };
+  A.fcalToggle = () => { const C = G.ui.fort.fc; C.open = !C.open; G.render(); };
+  A.fcalSel = (el) => { const C = G.ui.fort.fc; C.sel = C.sel === el.dataset.d ? null : el.dataset.d; G.render(); };
+  const fshift = (n) => { const C = G.ui.fort.fc, d = new Date(+C.month.slice(0, 4), +C.month.slice(5, 7) - 1 + n, 1); C.month = d.getFullYear() + '-' + G.pad(d.getMonth() + 1); C.sel = null; G.render(); };
+  A.fcalPrev = () => fshift(-1);
+  A.fcalNext = () => { if (G.ui.fort.fc.month < G.ymd(new Date()).slice(0, 7)) fshift(1); };
   A.frCancel = () => { G.ui.free = blank(); G.render(); };
   A.frDelAsk = (el) => { U().del = el.dataset.id; G.render(); };
   A.frDelCancel = () => { U().del = null; G.render(); };
@@ -161,6 +166,28 @@
       wk.push({ v: useMin ? inW.reduce((s, x) => s + (x.min || 0), 0) : inW.length, d: G.pad(a.getDate()) + '.' + G.pad(a.getMonth() + 1) + '.', cur: i === 0 }); }
     const maxW = Math.max.apply(null, wk.map((w) => w.v).concat([1]));
     const bars = wk.map((w) => `<div style="flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px"><span class="num" style="font-size:13px;color:${w.cur ? 'var(--amber)' : 'var(--muted)'}">${w.v || ''}</span><div style="width:100%;height:${w.v ? Math.max(8, Math.round(w.v / maxW * 80)) : 3}%;border-radius:6px 6px 0 0;background:${w.cur ? 'var(--amber)' : 'var(--line)'}"></div></div>`).join('');
+    // Karteikarten-Trommel: die letzten 5 Einheiten, senkrecht durchblättern
+    const last5 = all.slice(0, 5);
+    const drum = `<div style="display:flex;flex-direction:column;gap:6px"><div class="row-between" style="padding:0 4px"><span class="label" style="font-size:12px">Zuletzt · wischen zum Blättern</span><span class="small">${last5.length} von ${all.length}</span></div>
+      <div class="drum" role="list" aria-label="Letzte freie Trainings" tabindex="0">${last5.map((x, i) => `<div class="drum-i" role="listitem" aria-label="Karte ${i + 1} von ${last5.length}">${G.freeCard(x, { sm: true })}</div>`).join('')}</div></div>`;
+    // Kalender: alle Tage mit freiem Training gelb, antippen = Karte klappt auf
+    const F = G.ui.fort, C = F.fc || (F.fc = { open: false, month: null, sel: null }), todayKey = G.ymd(new Date());
+    const dm = {}; all.forEach((x) => { const k = G.ymd(new Date(x.date)); (dm[k] || (dm[k] = [])).push(x); });
+    if (!C.month) C.month = (Object.keys(dm).sort().pop() || todayKey).slice(0, 7);
+    const MON = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+    const my = +C.month.slice(0, 4), mm = +C.month.slice(5, 7), lead = (new Date(my, mm - 1, 1).getDay() + 6) % 7, dim = new Date(my, mm, 0).getDate();
+    let grid = ''; for (let k = 0; k < lead; k++) grid += '<span></span>';
+    for (let d = 1; d <= dim; d++) {
+      const key = C.month + '-' + G.pad(d), has = !!dm[key], sel = key === C.sel;
+      grid += `<button type="button" class="fcal-day${has ? ' has' : ''}${key === todayKey ? ' today' : ''}${sel ? ' sel' : ''}" ${has ? `data-a="fcalSel" data-d="${key}"` : 'disabled'} aria-pressed="${sel}" aria-label="${d}. ${MON[mm - 1]}${has ? ', freies Training' : ''}"><span class="cal-n">${d}</span></button>`;
+    }
+    const isCur = C.month >= todayKey.slice(0, 7), selList = C.sel && dm[C.sel] ? dm[C.sel] : [];
+    const calHtml = `<div class="card" style="gap:12px;padding:0">
+      <button type="button" class="link-area" style="flex-direction:row;align-items:center;justify-content:space-between;width:100%;padding:14px 16px" data-a="fcalToggle" aria-expanded="${C.open}"><span class="h3" style="font-size:19px">Kalender · alle Tage</span><span class="muted">${C.open ? I.up(20) : I.down(20)}</span></button>
+      ${C.open ? `<div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:12px"><div class="row-between"><button type="button" class="icon-btn" data-a="fcalPrev" aria-label="Voriger Monat">${I.back()}</button><span class="num" style="font-size:22px;text-align:center">${MON[mm - 1]} ${my}</span><button type="button" class="icon-btn" data-a="fcalNext" ${isCur ? 'disabled style="opacity:.3"' : ''} aria-label="Nächster Monat">${I.next(20)}</button></div>
+        <div class="cal-grid">${['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((w) => `<span class="cal-wd">${w}</span>`).join('')}${grid}</div>
+        <span class="tiny" style="text-align:center">Gelbe Tage = freies Training. Tippe darauf, um die Karte aufzuklappen.</span>
+        ${selList.map((x) => G.freeCard(x, { sm: true })).join('')}</div>` : ''}</div>`;
     return `<div class="list">
       <div class="stats">
         <div class="stat" style="border-color:var(--amber)"><span class="num amber">${all.length}</span><span>${all.length === 1 ? 'Eintrag' : 'Einträge'}</span></div>
@@ -170,7 +197,7 @@
       <div class="card" style="gap:8px"><span class="label" style="font-size:12px">${useMin ? 'Aktive Minuten' : 'Einträge'} pro Woche</span>
         <div style="display:flex;align-items:flex-end;gap:8px;height:100px">${bars}</div>
         <div style="display:flex;gap:8px;border-top:1px solid var(--line);padding-top:6px">${wk.map((w) => `<span style="flex:1;min-width:0;text-align:center;font-size:11px;color:var(--muted)">${w.d}</span>`).join('')}</div></div>
-      ${all.slice(0, 3).map((x) => G.freeCard(x, { sm: true })).join('')}
-      <a href="#/notiz" class="btn ghost sm" style="align-self:center">Alle Einträge ansehen${favs ? ' · ' + favs + (favs === 1 ? ' Favorit' : ' Favoriten') : ''}</a></div>`;
+      ${drum}${calHtml}
+      <a href="#/notiz" class="btn ghost sm" style="align-self:center">Alle Einträge bearbeiten${favs ? ' · ' + favs + (favs === 1 ? ' Favorit' : ' Favoriten') : ''}</a></div>`;
   };
 })();

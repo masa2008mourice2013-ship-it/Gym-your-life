@@ -8,7 +8,7 @@
     plans: 'gyl-plaene-v1', active: 'gyl-aktiv-v1', days: 'gyl-tage-v1', last: 'gyl-letzte-werte-v1',
     hist: 'gyl-verlauf-v1', own: 'gyl-eigene-uebungen-v1', notes: 'gyl-notizen-v1', settings: 'gyl-einstellungen-v1',
     run: 'gyl-laufendes-training-v1', habits: 'gyl-gewohnheiten-v1', hlog: 'gyl-gewohnheiten-log-v1',
-    routines: 'gyl-routinen-v1', food: 'gyl-essen-ideen-v1', swim: 'gyl-schwimmen-v1', dayplan: 'gyl-tagesplan-v1', free: 'gyl-freies-training-v1', acts: 'gyl-freie-aktivitaeten-v1'
+    routines: 'gyl-routinen-v1', food: 'gyl-essen-ideen-v1', swim: 'gyl-schwimmen-v1', dayplan: 'gyl-tagesplan-v1', free: 'gyl-freies-training-v1', acts: 'gyl-freie-aktivitaeten-v1', foodimg: 'gyl-essen-bilder-v1'
   };
   G.load = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch (e) { return fb; } };
   G.save = (k, v) => {
