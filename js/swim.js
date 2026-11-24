@@ -35,11 +35,11 @@
   G.swimCard = (x, o) => {
     const t = tot(x), d = new Date(x.date), n = x.blocks.length;
     return `<div class="card" style="padding:0;gap:0;${o.open ? 'border:2px solid var(--blue)' : ''}">
-      <button type="button" class="link-area" style="padding:14px 14px 12px;gap:10px" ${o.toggle} aria-expanded="${o.open}">
+      ${o.toggle ? `<button type="button" class="link-area" style="padding:14px 14px 12px;gap:10px" ${o.toggle} aria-expanded="${o.open}">` : '<div class="link-area" style="padding:14px 14px 12px;gap:10px;cursor:default">'}
         <span class="row-between" style="width:100%"><span style="display:flex;flex-direction:column;gap:2px"><span class="num" style="font-size:24px;line-height:1.05;text-transform:uppercase">${G.WDL[d.getDay()]}, ${d.getDate()}.${d.getMonth() + 1}.</span>
           <span class="small"><span class="txt-blue" style="font-weight:600">Schwimmen</span> · ${n} ${n === 1 ? 'Abschnitt' : 'Abschnitte'} · ${G.agoText(x.date)}</span></span><span class="muted">${o.open ? I.up(20) : I.down(20)}</span></span>
         ${statsRow(t)}
-      </button>
+      ${o.toggle ? '</button>' : '</div>'}
       ${o.open ? details(x) + (o.more || '') : ''}
     </div>`;
   };

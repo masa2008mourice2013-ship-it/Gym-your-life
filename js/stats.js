@@ -4,7 +4,7 @@
   const isTimeEx = (x, name) => x.modes && x.modes[name] === 'time';
 
   // ---------- Verlauf ----------
-  G.ui.verlauf = { openIdx: 0 };
+  G.ui.verlauf = { openIdx: 0, calOpen: true, month: null, sel: null };
   G.screens.verlauf = () => {
     const all = G.history(), swims = G.swimSessions(), frees = G.freeEntries();
     if (!all.length && !swims.length && !frees.length) return `<div class="screen with-nav">${G.header()}
@@ -37,17 +37,11 @@
       .concat(swims.map((x) => ({ date: x.date, swim: x })))
       .concat(frees.map((x) => ({ date: x.date, free: x })))
       .sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
-    const cards = items.map((it, i) => {
-      if (it.free) { const d = new Date(it.free.date);
-        return `<div class="card" style="gap:8px;border-color:var(--amber)"><div class="row-between"><span style="display:flex;flex-direction:column;gap:2px"><span class="num" style="font-size:24px;line-height:1.05;text-transform:uppercase">${G.WDL[d.getDay()]}, ${d.getDate()}.${d.getMonth() + 1}.</span>
-          <span class="small"><span class="amber" style="font-weight:600">Freies Training</span>${it.free.fav ? ' · Favorit' : ''} · ${G.agoText(it.free.date)}</span></span><a href="#/notiz" class="icon-btn plain" style="color:var(--muted)" aria-label="Freies Training ansehen oder bearbeiten">${I.pencil(20)}</a></div>
-          <span style="font-size:15px;line-height:1.5;white-space:pre-wrap">${esc(it.free.text)}</span>${G.freeButtons(it.free)}</div>`; }
-      if (it.swim) return G.swimCard(it.swim, { open: G.ui.verlauf.openIdx === i, toggle: `data-a="verlaufToggle" data-i="${i}"` });
-      const s = it.gym;
-      const open = G.ui.verlauf.openIdx === i, prev = it.prev, d = new Date(s.x.date);
+    const gymCard = (s, prev, open, toggle) => {
+      const d = new Date(s.x.date);
       const pct = prev && prev.vol ? Math.round((s.vol - prev.vol) / prev.vol * 100) : null;
       return `<div class="card" style="padding:0;gap:0;${open ? 'border:2px solid var(--teal)' : ''}">
-        <button type="button" class="link-area" style="padding:14px 14px 12px;gap:10px" data-a="verlaufToggle" data-i="${i}" aria-expanded="${open}">
+        ${toggle ? `<button type="button" class="link-area" style="padding:14px 14px 12px;gap:10px" ${toggle} aria-expanded="${open}">` : '<div class="link-area" style="padding:14px 14px 12px;gap:10px;cursor:default">'}
           <span class="row-between" style="width:100%"><span style="display:flex;flex-direction:column;gap:2px"><span class="num" style="font-size:24px;line-height:1.05;text-transform:uppercase">${G.WDL[d.getDay()]}, ${d.getDate()}.${d.getMonth() + 1}.</span>
             <span class="small">${esc(s.x.plan)} · ${G.agoText(s.x.date)}</span></span><span class="muted">${open ? I.up(20) : I.down(20)}</span></span>
           <span style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%">
@@ -55,21 +49,61 @@
             <span class="inset" style="display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:12px"><span class="num teal" style="font-size:22px;line-height:1">${G.fmtVol(s.vol)}</span><span style="font-size:11px;color:${pct === null ? 'var(--muted)' : pct > 0 ? 'var(--teal)' : pct < 0 ? 'var(--coral)' : 'var(--muted)'}">${pct === null ? 'kg bewegt' : (pct > 0 ? '+' : '') + pct + ' % kg'}</span></span>
             <span class="inset" style="display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:12px"><span class="num${s.records ? ' amber' : ''}" style="font-size:22px;line-height:1">${s.records}</span><span style="font-size:11px;color:var(--muted)">Rekorde</span></span>
           </span>
-        </button>
+        ${toggle ? '</button>' : '</div>'}
         ${open ? `<div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:6px">${s.exercises.map((e) => `<div class="inset" style="display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:10px 12px;border-radius:12px">
           <span style="font-size:15px;font-weight:600">${esc(e.name)}</span><span class="num" style="font-size:18px;color:${e.rec ? 'var(--amber)' : 'var(--text)'}"><span style="font-family:var(--body);font-size:13px;color:${e.trendColor}">${e.trend}</span> ${e.best}</span>
           <span style="grid-column:1/-1;font-size:13px;color:var(--muted2)">${e.sets}</span></div>`).join('')}</div>` : ''}
       </div>`;
+    };
+    const cards = items.map((it, i) => {
+      if (it.free) return G.freeCard(it.free);
+      if (it.swim) return G.swimCard(it.swim, { open: G.ui.verlauf.openIdx === i, toggle: `data-a="verlaufToggle" data-i="${i}"` });
+      return gymCard(it.gym, it.prev, G.ui.verlauf.openIdx === i, `data-a="verlaufToggle" data-i="${i}"`);
     }).join('');
+    // ---------- Kalenderblatt ----------
+    const V = G.ui.verlauf, todayKey = G.ymd(new Date());
+    if (!V.month) V.month = todayKey.slice(0, 7);
+    const dayMap = {}, put = (date, kind, o) => { const k = G.ymd(new Date(date)); (dayMap[k] || (dayMap[k] = { gym: [], swim: [], free: [] }))[kind].push(o); };
+    info.forEach((x, i) => put(x.x.date, 'gym', { s: x, prev: info[i - 1] }));
+    swims.forEach((x) => put(x.date, 'swim', x)); frees.forEach((x) => put(x.date, 'free', x));
+    if (!V.sel) { const ks = Object.keys(dayMap).filter((k) => k <= todayKey).sort(); V.sel = dayMap[todayKey] || !ks.length ? todayKey : ks[ks.length - 1]; V.month = V.sel.slice(0, 7); }
+    const MON = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+    const my = +V.month.slice(0, 4), mm = +V.month.slice(5, 7), lead = (new Date(my, mm - 1, 1).getDay() + 6) % 7, dim = new Date(my, mm, 0).getDate();
+    let grid = ''; for (let k = 0; k < lead; k++) grid += '<span></span>';
+    for (let dnum = 1; dnum <= dim; dnum++) {
+      const key = V.month + '-' + G.pad(dnum), m = dayMap[key], fut = key > todayKey, sel = key === V.sel;
+      const dots = m ? (m.gym.length ? '<span class="cal-dot" style="background:var(--teal)"></span>' : '') + (m.swim.length ? '<span class="cal-dot" style="background:var(--blue)"></span>' : '') + (m.free.length ? '<span class="cal-dot" style="background:var(--amber)"></span>' : '') : '';
+      const n = m ? m.gym.length + m.swim.length + m.free.length : 0;
+      grid += `<button type="button" class="cal-day${key === todayKey ? ' today' : ''}${sel ? ' sel' : ''}" data-a="calSel" data-d="${key}"${fut ? ' disabled' : ''} aria-pressed="${sel}" aria-label="${dnum}. ${MON[mm - 1]}${key === todayKey ? ' (heute)' : ''}, ${n ? n + (n === 1 ? ' Eintrag' : ' Einträge') : 'nichts eingetragen'}"><span class="cal-n">${dnum}</span><span class="cal-dots">${dots}</span></button>`;
+    }
+    const isCur = V.month === todayKey.slice(0, 7), sp = V.sel.split('-').map(Number), sd = new Date(sp[0], sp[1] - 1, sp[2]), dm = dayMap[V.sel];
+    let detail = '';
+    if (dm) detail += dm.gym.map((g) => gymCard(g.s, g.prev, true, '')).join('') + dm.swim.map((x) => G.swimCard(x, { open: true, toggle: '' })).join('') + dm.free.map((x) => G.freeCard(x)).join('');
+    else detail = '<div class="card empty" style="padding:18px">An diesem Tag ist nichts eingetragen.</div>';
+    const add = V.sel <= todayKey ? `<div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn sec sm" data-a="calFree">${I.note(16)}Freies Training eintragen</button><button type="button" class="btn sec sm" data-a="calSwim">${I.swim(16)}Schwimmen eintragen</button></div>` : '';
+    const calendar = `<div class="card" style="gap:12px">
+      <button type="button" class="link-area" style="flex-direction:row;align-items:center;justify-content:space-between;width:100%" data-a="calToggle" aria-expanded="${V.calOpen}"><span class="h2" style="font-size:22px">Kalenderblatt</span><span class="muted">${V.calOpen ? I.up(20) : I.down(20)}</span></button>
+      ${V.calOpen ? `<div class="row-between"><button type="button" class="icon-btn" data-a="calPrev" aria-label="Voriger Monat">${I.back()}</button><span class="num" style="font-size:22px;text-align:center">${MON[mm - 1]} ${my}</span><button type="button" class="icon-btn" data-a="calNext" ${isCur ? 'disabled style="opacity:.3"' : ''} aria-label="Nächster Monat">${I.next(20)}</button></div>` : ''}
+      ${V.calOpen ? `<div class="cal-grid">${['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((w) => `<span class="cal-wd">${w}</span>`).join('')}${grid}</div>
+        <div class="row" style="gap:14px;flex-wrap:wrap;justify-content:center"><span class="small"><span class="cal-dot" style="background:var(--teal);display:inline-block"></span> Training</span><span class="small"><span class="cal-dot" style="background:var(--blue);display:inline-block"></span> Schwimmen</span><span class="small"><span class="cal-dot" style="background:var(--amber);display:inline-block"></span> Freies Training</span></div>` : ''}
+    </div>
+    ${V.calOpen ? `<div class="list"><h2 class="h2" style="padding:0 4px">${G.WDL[sd.getDay()]}, ${sd.getDate()}.${sd.getMonth() + 1}.${V.sel === todayKey ? ' · heute' : ''}</h2>${detail}${add}</div>` : ''}`;
     return `<div class="screen with-nav">${G.header()}
-      <div class="title-block"><span class="eyebrow">Deine letzten 5 Trainings</span><h1 class="h1">Verlauf</h1></div>
+      <div class="title-block"><span class="eyebrow">Kalender und Rückblick</span><h1 class="h1">Verlauf</h1></div>
       ${!last5.length ? '' : `<div class="card" style="gap:8px"><div class="row-between"><span class="label" style="font-size:12px">Bewegte kg pro Training</span>${trend}</div>
         <div style="display:flex;align-items:flex-end;gap:10px;height:110px">${bars.map((b) => `<div style="flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px"><span class="num" style="font-size:14px;color:${b.lc}">${b.v}</span><div style="width:100%;height:${b.h}%;border-radius:6px 6px 0 0;background:${b.c}"></div></div>`).join('')}</div>
         <div style="display:flex;gap:10px;border-top:1px solid var(--line);padding-top:6px">${bars.map((b) => `<span style="flex:1;text-align:center;font-size:11px;color:var(--muted)">${b.d}</span>`).join('')}</div></div>`}
-      ${cards}
-      <span class="tiny" style="padding:0 4px">Gelb = neuer Rekord, ↑ ↓ = Vergleich zum vorherigen Mal. Blau = Schwimmen, Orange = freies Training.</span>
+      ${calendar}
+      <span class="tiny" style="padding:0 4px">Tippe auf einen Tag im Kalender, um alle Einzelheiten zu sehen. Gelb = neuer Rekord, ↑ ↓ = Vergleich zum vorherigen Mal.</span>
     </div>${G.nav('verlauf')}`;
   };
+  const shiftMonth = (n) => { const V = G.ui.verlauf, d = new Date(+V.month.slice(0, 4), +V.month.slice(5, 7) - 1 + n, 1); V.month = d.getFullYear() + '-' + G.pad(d.getMonth() + 1); G.render(); };
+  G.actions.calToggle = () => { G.ui.verlauf.calOpen = !G.ui.verlauf.calOpen; G.render(); };
+  G.actions.calPrev = () => shiftMonth(-1);
+  G.actions.calNext = () => { if (G.ui.verlauf.month < G.ymd(new Date()).slice(0, 7)) shiftMonth(1); };
+  G.actions.calSel = (el) => { G.ui.verlauf.sel = el.dataset.d; G.render(); };
+  G.actions.calFree = () => { G.freeStart(G.ui.verlauf.sel); location.hash = '#/notiz'; };
+  G.actions.calSwim = () => { G.actions.swNew(); G.ui.swim.f.date = G.ui.verlauf.sel; location.hash = '#/schwimmen'; };
   G.actions.verlaufToggle = (el) => { const i = +el.dataset.i; G.ui.verlauf.openIdx = G.ui.verlauf.openIdx === i ? -1 : i; G.render(); };
 
   // ---------- Fortschritt ----------

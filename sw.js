@@ -1,5 +1,5 @@
 // Gym your Life – Offline-Speicher (Service Worker)
-const CACHE = 'gyl-v7';
+const CACHE = 'gyl-v8';
 const FILES = ['./', './index.html', './styles.css', './data.js', './js/core.js', './js/home.js', './js/plan.js', './js/plaene.js', './js/training.js', './js/stats.js', './js/routinen.js', './js/essen.js', './js/swim.js', './js/frei.js', './js/settings.js', './js/main.js', './manifest.webmanifest',
   './icons/logo.png', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon-32.png'];
 

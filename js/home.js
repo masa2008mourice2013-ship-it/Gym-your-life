@@ -50,14 +50,14 @@
   G.ui.home = { editingId: null, draft: '', showDays: false, dayWd: null, dayI: 0 };
   G.screens.home = () => {
     const u = G.ui.home, s = G.settings(), plans = G.plans(), days = G.load(G.K.days, [1, 3, 5]), hist = G.history();
-    const wp = G.load(G.K.weekplan, {}), wpPlan = (wd) => plans.find((p) => p.id === wp[wd]) || null;
+    const dpl = G.load(G.K.dayplan, {}), dpPlan = (d) => plans.find((p) => p.id === dpl[G.ymd(d)]) || null;
     const today = new Date();
     // Woche
     let next = null;
     const week = [];
     for (let i = 0; i < 28; i++) {
       const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
-      const dp = wpPlan(d.getDay()), train = days.indexOf(d.getDay()) !== -1 || !!dp;
+      const dp = dpPlan(d), train = days.indexOf(d.getDay()) !== -1 || !!dp;
       if (train && !next) next = { i, d };
       const tag = dp ? dp.name : i === 0 ? 'Heute' : train ? 'Training' : '';
       week.push(`<button type="button" class="day${train ? ' train' : ''}${i === 0 ? ' today' : ''}${i % 7 === 0 ? ' snap' : ''}" data-a="dayOpen" data-wd="${d.getDay()}" data-i="${i}" aria-label="${G.WDL[d.getDay()]}, ${d.getDate()}.${d.getMonth() + 1}.${i === 0 ? ' (heute)' : ''}${dp ? ', Plan: ' + esc(dp.name) : ''} – Plan wählen"><span class="wd">${G.WD[d.getDay()]}</span><span class="dn">${d.getDate()}</span><span class="tag${dp ? ' plan' : ''}">${esc(tag)}</span></button>`);
@@ -66,7 +66,7 @@
     // nächster Plan
     const lastPlan = hist.length ? hist[hist.length - 1].plan : null;
     const li = plans.findIndex((p) => p.name === lastPlan);
-    const fixed = next ? wpPlan(next.d.getDay()) : null;
+    const fixed = next ? dpPlan(next.d) : null;
     const nextP = fixed || (li === -1 ? plans[0] : plans[(li + 1) % plans.length]);
     const lastOfNext = hist.filter((h) => h.plan === nextP.name).pop();
     // Zahlen
@@ -89,15 +89,15 @@
     </div></div>` : '';
     let dayOne = '';
     if (u.dayWd !== null) {
-      const wd = u.dayWd, dd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + u.dayI), cur = wpPlan(wd), isToday = u.dayI === 0;
+      const wd = u.dayWd, dd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + u.dayI), cur = dpPlan(dd), isToday = u.dayI === 0;
       const opt = (id, title, sub, on) => `<button type="button" class="row" style="min-height:60px;width:100%;flex-shrink:0;border-radius:14px;background:var(--card2);border:${on ? '2px solid var(--teal)' : '1px solid var(--line)'};padding:0 14px;color:var(--text);text-align:left" data-a="daySetPlan" data-id="${id}" aria-pressed="${on}">
         <span class="grow" style="display:flex;flex-direction:column;gap:2px"><span class="h3 ellipsis">${esc(title)}</span><span class="small">${sub}</span></span>${on ? `<span class="teal">${I.check(22)}</span>` : ''}</button>`;
       dayOne = `<div class="overlay" data-a="dayClose" data-self="1"><div class="sheet" role="dialog" aria-label="${G.WDL[wd]} einstellen">
         <div class="grip"></div>
         <div><h2 class="h2" style="font-size:28px">${G.WDL[wd]}, ${dd.getDate()}.${dd.getMonth() + 1}.</h2>
-          <span class="small">Wähle einen Plan – er gilt dann für jeden ${G.WDL[wd]}. Du musst aber keinen wählen.</span></div>
+          <span class="small">${isToday ? 'Was hast du heute vor?' : 'Was möchtest du an diesem Tag trainieren?'} Die Wahl gilt nur für diesen Tag – du entscheidest jeden Tag neu. Du musst auch keinen Plan wählen.</span></div>
         <div class="scroll" style="gap:8px">
-          ${opt('', 'Kein fester Plan', 'Die App schlägt den nächsten Plan vor', !cur)}
+          ${opt('', 'Noch offen', 'Die App schlägt den nächsten Plan vor', !cur)}
           ${plans.map((p) => opt(p.id, p.name, p.exercises.length + ' Übungen', !!cur && cur.id === p.id)).join('')}
         </div>
         ${isToday && cur ? `<a href="#/training" class="btn md" data-a="setActive" data-id="${cur.id}">${I.play(18)}${esc(cur.name)} jetzt starten</a>` : ''}
@@ -142,21 +142,19 @@
   G.actions.homeDaysClose = () => { G.ui.home.showDays = false; G.render(); };
   G.actions.toggleDay = (el) => {
     const wd = +el.dataset.wd; let days = G.load(G.K.days, [1, 3, 5]);
-    const wp = G.load(G.K.weekplan, {}), tile = days.indexOf(wd) !== -1 || wp[wd];
-    if (tile) { days = days.filter((x) => x !== wd); if (wp[wd]) { delete wp[wd]; G.save(G.K.weekplan, wp); } }
-    else days = days.concat([wd]);
+    days = days.indexOf(wd) !== -1 ? days.filter((x) => x !== wd) : days.concat([wd]);
     G.save(G.K.days, days); G.render();
   };
   G.actions.dayOpen = (el) => { Object.assign(G.ui.home, { dayWd: +el.dataset.wd, dayI: +el.dataset.i }); G.render(); };
   G.actions.dayClose = () => { G.ui.home.dayWd = null; G.render(); };
   G.actions.daySetPlan = (el) => {
-    const wd = G.ui.home.dayWd, wp = G.load(G.K.weekplan, {}), id = el.dataset.id;
-    if (id) {
-      wp[wd] = id;
-      const days = G.load(G.K.days, [1, 3, 5]); if (days.indexOf(wd) === -1) G.save(G.K.days, days.concat([wd]));
-      G.toast('Jeden ' + G.WDL[wd] + ': ' + G.plans().find((p) => p.id === id).name);
-    } else { delete wp[wd]; G.toast('Kein fester Plan für ' + G.WDL[wd]); }
-    G.save(G.K.weekplan, wp); G.render();
+    const h = G.ui.home, now = new Date(), d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + h.dayI), key = G.ymd(d), id = el.dataset.id;
+    const dpl = G.load(G.K.dayplan, {}), cut = G.ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+    Object.keys(dpl).forEach((k) => { if (k < cut) delete dpl[k]; });   // alte Tage aufräumen
+    const when = G.WDL[d.getDay()] + ', ' + d.getDate() + '.' + (d.getMonth() + 1) + '.';
+    if (id) { dpl[key] = id; G.toast(when + ': ' + G.plans().find((p) => p.id === id).name); }
+    else { delete dpl[key]; G.toast(when + ': noch offen'); }
+    G.save(G.K.dayplan, dpl); G.render();
   };
   G.actions.homeRename = (el) => { const p = G.plans().find((x) => x.id === el.dataset.id); G.ui.home.editingId = p.id; G.ui.home.draft = p.name; G.render(); };
   G.inputs.homeDraft = (v) => { G.ui.home.draft = v; };

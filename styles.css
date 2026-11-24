@@ -237,3 +237,14 @@ button.day { font: inherit; padding: 0; width: 100%; cursor: pointer; }
 .day.today { background: var(--amber); border: 2px solid var(--amber); color: var(--bg); }
 .day.today .wd, .day.today .dn, .day.today .tag { color: var(--bg); }
 .day.today .tag { font-weight: 700; }
+
+/* ---------- Kalenderblatt (Verlauf) ---------- */
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal-wd { text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; padding-bottom: 2px; }
+.cal-day { height: 48px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; }
+.cal-n { font-family: var(--head); font-weight: 700; font-size: 18px; line-height: 1; }
+.cal-dots { display: flex; gap: 3px; height: 7px; }
+.cal-dot { width: 7px; height: 7px; border-radius: 999px; box-shadow: 0 0 0 1px var(--bg); }
+.cal-day.today { background: var(--amber); border-color: var(--amber); color: var(--bg); }
+.cal-day.sel { outline: 2px solid var(--teal); outline-offset: 1px; }
+.cal-day:disabled { opacity: .35; cursor: default; }

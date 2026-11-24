@@ -3,11 +3,8 @@
   const G = window.G, I = G.I, esc = G.esc;
 
   G.screens.plaene = () => {
-    const u = G.ui.home, plans = G.plans(), wp = G.load(G.K.weekplan, {});
-    const fixedDays = (p) => {
-      const d = [1, 2, 3, 4, 5, 6, 0].filter((wd) => wp[wd] === p.id).map((wd) => G.WD[wd]);
-      return d.length ? 'jeden ' + d.join(', ') : 'bearbeiten';
-    };
+    const u = G.ui.home, plans = G.plans(), dpl = G.load(G.K.dayplan, {}), todayKey = G.ymd(new Date());
+    const fixedDays = (p) => (dpl[todayKey] === p.id ? 'für heute gewählt' : 'bearbeiten');
     const planCards = plans.map((p) => u.editingId === p.id ? `
       <div class="card active sm" style="gap:10px">
         <label class="label" for="pname">Plan umbenennen</label>
